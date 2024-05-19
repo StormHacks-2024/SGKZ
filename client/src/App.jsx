@@ -93,7 +93,7 @@ function App() {
           reader.onerror = (error) => reject(error);
           reader.readAsDataURL(audioBlob);
       });
-      // console.log("audioBlob:", audioBlob);
+      console.log("audioBlob:", audioBlob);
 
       const uuid = document.cookie.split("=")[1];
       console.log(uuid);
@@ -340,6 +340,24 @@ function App() {
         }
     };
 
+    const handleDelete = async () =>{
+        try {
+            const response = await fetch('http://localhost:5000/delete', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                credentials: 'include'
+            });
+            console.log(response)
+            setChats([])
+            // history= []
+            window.location.reload()
+        } catch (error) {
+            console.error('Error deleting the chat:', error);
+        }
+    }
+
     const handleSummarize = async () => {
         console.log('response')
 
@@ -408,37 +426,46 @@ function App() {
                     </div>
                     <div className="mx-auto my-2 w-fit flex flex-col items-center justify-center">
                         <div className="flex">
-                            <button
-                                className="inline-flex items-center justify-center px-3 py-1 mr-2 my-2 text-sm font-medium leading-5 text-[#F8F4E3] bg-secondary/10 hover:bg-secondary/20 rounded-full"
-                                onClick={handlePlayRecording}>
-                                <i className="fa-solid fa-stop pr-1"></i>
-                                Play Last Recording
-                            </button>
-                            <button
-                                className="inline-flex items-center justify-center px-3 py-1 mr-2 my-2 text-sm font-medium leading-5 text-[#F8F4E3] bg-secondary/10 hover:bg-secondary/20 rounded-full"
-                                onClick={handlePlayEverything}>
-                                <i className="fa-solid fa-microphone-lines pr-1"></i>
-                                Play Full Conversation
-                            </button>
-                            <button
-                                className="inline-flex items-center justify-center px-3 py-1 mr-2 my-2 text-sm font-medium leading-5 text-[#F8F4E3] bg-secondary/10 hover:bg-secondary/20 rounded-full"
-                                onClick={handleSummarize}>
-                                <i className="fa-solid fa-microphone-lines pr-1"></i>
-                                Summerize Performance
-                            </button>
-                        </div>
-                        <div className="flex">
+                            
                             <button
                                 className={`inline-flex items-center justify-center px-3 py-1 mr-2 my-2 text-sm font-medium leading-5 text-[#F8F4E3] ${isRecording ? 'bg-red-500' : 'bg-secondary/10'} hover:bg-secondary/20 rounded-full`}
                                 onClick={handleRecord}>
                                 <i className="fa-solid fa-microphone-lines pr-1"></i>
                                 Record
                             </button>
+                            
                             <button
                                 className="inline-flex items-center justify-center px-3 py-1 mr-2 my-2 text-sm font-medium leading-5 text-[#F8F4E3] bg-secondary/10 hover:bg-secondary/20 rounded-full"
                                 onClick={handleStop}>
                                 <i className="fa-solid fa-stop pr-1"></i>
-                                Stop
+                                Stop Recording
+                            </button>
+                            <button
+                                className="inline-flex items-center justify-center px-3 py-1 mr-2 my-2 text-sm font-medium leading-5 text-[#F8F4E3] bg-secondary/10 hover:bg-secondary/20 rounded-full"
+                                onClick={handlePlayRecording}>
+                                <i className="fa-solid fa-play pr-1"></i>
+                                Play Last Recording
+                            </button>
+                            <button
+                                className="inline-flex items-center justify-center px-3 py-1 mr-2 my-2 text-sm font-medium leading-5 text-[#F8F4E3] bg-secondary/10 hover:bg-secondary/20 rounded-full"
+                                onClick={handlePlayEverything}>
+                                <i className="fa-solid fa-play pr-1"></i>
+                                Play Full Conversation
+                            </button>
+                        </div>
+                        <div className="flex">
+                            <button
+                                className="inline-flex items-center justify-center px-3 py-1 mr-2 my-2 text-sm font-medium leading-5 text-[#F8F4E3] bg-secondary/10 hover:bg-secondary/20 rounded-full"
+                                onClick={handleSummarize}>
+                                <i className="fa-solid fa-print pr-1"></i>
+                                Summarize Conversation
+                            </button>
+                            
+                            <button
+                                className="inline-flex items-center justify-center px-3 py-1 mr-2 my-2 text-sm font-medium leading-5 text-[#F8F4E3] bg-secondary/10 hover:bg-secondary/20 rounded-full"
+                                onClick={handleDelete}>
+                                <i className="fa-solid fa-trash pr-1"></i>
+                                Clear History
                             </button>
                         </div>
                     </div>
@@ -460,7 +487,7 @@ function App() {
                                         <i className="fa-solid fa-robot"></i>
                                     )}
                                 </div>
-                                {console.log(chat)}
+                                {/* {console.log(chat)} */}
                                 <div className="w-[90%]">
                                     <p className={
                                         chat.user === "User" ? "text-secondary" :
@@ -471,8 +498,12 @@ function App() {
                             </div>
                         ))
                       }
+                      
                     </div>
+                    
                 </div>
+                
+                
             </div>
         </div>
     );

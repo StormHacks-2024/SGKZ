@@ -106,7 +106,7 @@ class Open {
 	}
 
 	async deleteUser(uuid){
-		deleteOperation(uuid)
+		await deleteOperation(uuid)
 	}
 }
 	

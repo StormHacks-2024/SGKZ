@@ -80,6 +80,7 @@ app.post('/chat', async (req, res) => {
 app.get('/history'	, async (req, res) => {
 	const uuid = getUUIDFromCookie(req);
 	const history = await getChatMessages(uuid);
+	console.log(history)
 	res.json({ history });
 });
 
@@ -120,7 +121,7 @@ app.post('/delete', async (req, res) => {
     const  uuid  = getUUIDFromCookie(req);
 	console.log('summarizeChat', uuid)
     await open.deleteUser(uuid);
-	res.status(201).json({message: 'check logs for debugging'})
+	res.json({message: 'check logs for debugging'})
 });
 
 
