@@ -64,7 +64,7 @@ app.post('/chat', async (req, res) => {
 		const content = `${transcription} \n ${emotion}`;
 		const response = await open.chat(content);
 		res.cookie('uuid', uuid);
-		res.json({ response, uuid });
+		res.json({ response, uuid, transcription });
 	} catch (error) {
 		res.status(500).json({ error: error.message });
 	}
