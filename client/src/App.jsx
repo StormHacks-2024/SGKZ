@@ -100,6 +100,7 @@ function App() {
                     // Add the chat to the chat list
                     setChats((prevChats) => [
                         ...prevChats,
+                        { user: "User", message: json.transcription },
                         { user: "System", message: emotion },
                     ]);
 
