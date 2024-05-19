@@ -50,15 +50,24 @@ app.post('/chat', async (req, res) => {
 	const { image, audio } = req.body; // Get content from request body
 	try {
 
-		console.log(audio)
-		// fs.writeFileSync('audio.wav', audio, 'base64');
-		const audioStream = fs.createReadStream('audio.mp3');
+
+		const base64Audio = audio.replace(/^data:audio\/webm;base64,/, "");
+    
+		// Decode the Base64 audio data
+		const audioBuffer = Buffer.from(base64Audio, 'base64');
+		const audioPath = 'audio.webm';
+		
+		// Write the decoded audio data to a file
+		fs.writeFileSync(audioPath, audioBuffer);
+		
+		const audioStream = fs.createReadStream('audio.webm');
+
 		const transcription = await open.transcribeAudio(audioStream);
 
 		const emotion = await captureAndAnalyze(image);
 
-		const content = `${emotion} +: + ${transcription}`;
 
+		const content = `${transcription} \n ${emotion}`;
 		const response = await open.chat(content);
 		res.json({ response });
 	} catch (error) {

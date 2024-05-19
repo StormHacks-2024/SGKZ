@@ -1,10 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Webcam Capture</title>
 </head>
+
 <body>
   <video id="video" width="640" height="480" autoplay></video>
 
@@ -28,7 +30,8 @@
     // Function to start recording audio
     recordButton.addEventListener('click', async () => {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      mediaRecorder = new MediaRecorder(stream);
+      const options = { mimeType: 'audio/webm' };
+      mediaRecorder = new MediaRecorder(stream, options);
       audioChunks.length = 0;
 
       mediaRecorder.addEventListener('dataavailable', event => {
@@ -43,7 +46,7 @@
       if (mediaRecorder && mediaRecorder.state !== 'inactive') {
         mediaRecorder.stop();
         mediaRecorder.addEventListener('stop', async () => {
-          const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+          const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
           audioUrl = URL.createObjectURL(audioBlob);
           playButton.disabled = false; // Enable the play button
 
@@ -95,11 +98,11 @@
       const json = await response.json();
       console.log(json);
 
-    const speech = new SpeechSynthesisUtterance()
-    const emotion = json.response
-    speech.text = `You are a ${emotion} person`
+      const speech = new SpeechSynthesisUtterance()
+      const emotion = json.response
+      speech.text = emotion;
 
-    speechSynthesis.speak(speech)
+      speechSynthesis.speak(speech)
     }
 
     // Utility function to convert Blob to Base64
@@ -115,4 +118,5 @@
     setupWebcam();
   </script>
 </body>
+
 </html>
