@@ -8,6 +8,7 @@ function App() {
     const [isDisabled, setIsDisabled] = useState(true);
     const [isRecording, setIsRecording] = useState(false);
     const [chats, setChats] = useState([]);
+    const [assistantMessages, setAssistantMessages] = useState([]);
 
     useEffect(() => {
         async function setupWebcam() {
@@ -183,6 +184,54 @@ function App() {
         }
     };
 
+    const handlePlayEverything = async () => {
+        try {
+            const response = await fetch('http://localhost:5000/queryVoicesAndAI', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                credentials: 'include'
+            });
+            const result = await response.json();
+            const { responseData } = result;
+            setAssistantMessages(responseData);
+
+   
+    
+            // Function to play the audio and then the speech
+            const playAudioAndSpeech = async (item) => {
+                return new Promise(async (resolve, reject) => {
+
+                    console.log(item);
+                    // Create and play the audio element
+                    const audio = new Audio(`data:audio/wav;base64,${item.audioBuffer}`);
+                    console.log("audio:", audio);
+                    audio.onended = async () => {
+                        // Once audio ends, check if there are messages
+                        if (item.messages.length > 0) {
+                            const speech = new SpeechSynthesisUtterance(item.messages.join(' '));
+                            speech.onend = () => resolve(); // Resolve the promise when speech ends
+                            speech.onerror = () => reject('Speech synthesis failed'); // Reject on speech error
+                            speechSynthesis.speak(speech);
+                        } else {
+                            resolve(); // Resolve the promise immediately if no messages
+                        }
+                    };
+                    audio.onerror = () => reject('Audio playback failed'); // Reject on audio error
+                    audio.play();
+                });
+            };
+    
+            // Sequentially play each audio and speech synthesis
+            for (const item of responseData) {
+                await playAudioAndSpeech(item); // Wait for one audio and its speech to complete before the next
+            }
+        } catch (error) {
+            console.error('Error fetching assistant messages: ', error);
+        }
+    };
+
     const captureImage = () => {
         const canvas = document.createElement("canvas");
         canvas.width = videoRef.current.videoWidth;
@@ -224,15 +273,16 @@ function App() {
                             Stop
                         </button>
                         <button
-                            className={
-                                isDisabled
-                                    ? "inline-flex items-center justify-center px-3 py-1 mr-2 my-2 text-sm font-medium leading-5 text-[#F8F4E3] bg-secondary/10 rounded-full"
-                                    : "inline-flex items-center justify-center px-3 py-1 mr-2 my-2 text-sm font-medium leading-5 text-[#F8F4E3] bg-secondary/10 hover:bg-secondary/20 rounded-full"
-                            }
-                            onClick={handlePlayRecording}
-                            disabled={isDisabled}>
-                            <i className="fa-solid fa-play pr-1"></i>
+                            className="inline-flex items-center justify-center px-3 py-1 mr-2 my-2 text-sm font-medium leading-5 text-[#F8F4E3] bg-secondary/10 hover:bg-secondary/20 rounded-full"
+                            onClick={handlePlayRecording}>
+                            <i className="fa-solid fa-stop pr-1"></i>
                             Play Last Recording
+                        </button>
+                        <button
+                            className="inline-flex items-center justify-center px-3 py-1 mr-2 my-2 text-sm font-medium leading-5 text-[#F8F4E3] bg-secondary/10 hover:bg-secondary/20 rounded-full"
+                            onClick={handlePlayEverything}>
+                            <i className="fa-solid fa-microphone-lines pr-1"></i>
+                            Play Full Conversation
                         </button>
                     </div>
                 </div>

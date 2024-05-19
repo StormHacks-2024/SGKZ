@@ -59,6 +59,31 @@ async function getChat(uuid) {
   }
 }
 
+async function getAssistantAudioChats(userId) {
+  try {
+      const collection = await getChatsCollection(); // Ensures you are connected to your MongoDB database
+      const query = {
+          "uuid": userId, // Filters by the 'uuid' which is assumed to be your user identifier field
+          "audio.path": { $ne: null }, // Checks for audio with a non-null path
+          "messages": {
+              $elemMatch: { role: 'assistant' } // Ensures at least one message from the assistant
+          }
+      };
+      const chats = await collection.find(query).toArray(); // Executes the query and converts the result to an array
+      if (chats.length > 0) {
+          console.log("Found chats with assistant messages and audio for user ID:", userId, chats);
+      } else {
+          console.log("No chats found meeting the criteria for user ID:", userId);
+      }
+      return chats; // Returns the chats or an empty array if no matches are found
+  } catch (e) {
+      console.error("Error fetching chats for user ID:", userId, e.message);
+      return []; // Handle errors gracefully by returning an empty array
+  }
+}
+
+
+
 
 // async function insertChat(chat) {
 //   const collection = await getCollection();
@@ -104,4 +129,4 @@ async function insertChat(uuid, userMessage, assistantMessage, audio) {
 }
 
 
-export { insertChat, insertMessage, getChatMessages, insertAudio };
+export { insertChat, insertMessage, getChatMessages, insertAudio, getAssistantAudioChats };

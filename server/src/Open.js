@@ -1,7 +1,7 @@
 import OpenAI from 'openai';
 import {
   getChatMessages,
-
+  getAssistantAudioChats,
   insertChat
 } from './mongo.js';
 
@@ -37,7 +37,7 @@ class Open {
 	}
 
 
-	async chat(uuid, userContent, audio) {
+	async chat(uuid, userContent, audio, audioBuffer) {
 		
 		console.log("userContent", userContent)
 		const messages = await getChatMessages(uuid);
@@ -50,10 +50,22 @@ class Open {
 		  messages: history
 		}).then(async (response) => {
 		  const assistantMessage = response.choices[0].message.content;
-		  await insertChat(uuid, userContent, assistantMessage,  audio);
+		  await insertChat(uuid, userContent, assistantMessage,  audioBuffer);
 		  return assistantMessage;
 		}).catch(error => error);
-	  }
+	}
+
+	async queryMessages(uuid) {
+		
+		const messages = await getChatMessages(uuid);
+		return messages
+	}
+
+	async queryVoiceAndAiMessages(uuid){
+		const query  = getAssistantAudioChats(uuid);
+		console.log(query)
+		return query
+	}
 }
 	
 

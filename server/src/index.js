@@ -58,15 +58,22 @@ app.post('/chat', async (req, res) => {
         fs.writeFileSync(audioPath, audioBuffer);
         const audioStream = fs.createReadStream(audioPath);
         const transcription = await open.transcribeAudio(audioStream);
-
 		const emotion = await captureAndAnalyze(image);
-
-		console.log(emotion)
-
 		const content = `${emotion}: ${transcription}`;
-		const response = await open.chat(uuid, content, audioStream);		
+		const response = await open.chat(uuid, content, audioStream, audioBuffer);		
 		res.cookie('uuid', uuid);
-		res.json({ response, uuid, transcription });
+		res.json({ response, uuid, transcription });	
+	} catch (error) {
+		res.status(500).json({ error: error.message });
+	}
+});
+app.post('/query', async (req, res) => {
+	 const uuid = getUUIDFromCookie(req);
+	// console.log(req.body);
+	// console.log(req);
+	try {
+		const response = await open.queryMessages(uuid);		
+		res.json({ response });
 	} catch (error) {
 		res.status(500).json({ error: error.message });
 	}
@@ -77,7 +84,28 @@ app.get('/history'	, async (req, res) => {
 	const history = await getChatMessages(uuid);
 	res.json({ history });
 });
+
 setInterval(() => {
 	captureAndAnalyze();
 }, 5000);
+
+app.post('/queryVoicesAndAI', async (req, res) => {
+    try {
+		const uuid = getUUIDFromCookie(req);
+        const chats = await open.queryVoiceAndAiMessages(uuid); // Assuming this function returns the needed data
+        console.log("hello")
+		const responseData = chats.map(chat => {
+			
+            return {
+                audioBuffer: chat.audio[0],
+                messages: chat.messages.filter(msg => msg.role === 'assistant').map(msg => msg.content)
+            };
+        });
+        res.json({ responseData });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+
 // testing
