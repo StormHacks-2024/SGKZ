@@ -101,7 +101,10 @@ app.post('/summarizeChat', async (req, res) => {
 	console.log('summarizeChat', uuid)
     const summary = await open.queryMessages(uuid);
     if (summary) {
-        res.json({ summary });
+		res.json({
+			text: summary.textMessage,
+			speech: summary.speechMessage
+		});
     } else {
         res.status(404).json({ message: 'Unable to summarize the chat' });
     }
@@ -109,7 +112,6 @@ app.post('/summarizeChat', async (req, res) => {
 
 app.post('/delete', async (req, res) => {
     const  uuid  = getUUIDFromCookie(req);
-	console.log('summarizeChat', uuid)
     await open.deleteUser(uuid);
 	res.status(201).json({message: 'check logs for debugging'})
 });
