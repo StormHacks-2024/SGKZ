@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Webcam Capture</title>
+</head>
+<body>
+  <video id="video" width="640" height="480" autoplay></video>
+
+  <div>
+    <button id="record">Record</button>
+    <button id="stop">Stop</button>
+    <button id="play" disabled>Play Recording</button>
+  </div>
+
+  <div id="audio"></div>
+
+  <script>
+    const recordButton = document.getElementById('record');
+    const stopButton = document.getElementById('stop');
+    const playButton = document.getElementById('play');
+    const audioElement = document.getElementById('audio');
+    const audioChunks = [];
+    let mediaRecorder;
+    let audioUrl;
+
+    // Function to start recording audio
+    recordButton.addEventListener('click', async () => {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      mediaRecorder = new MediaRecorder(stream);
+      audioChunks.length = 0;
+
+      mediaRecorder.addEventListener('dataavailable', event => {
+        audioChunks.push(event.data);
+      });
+
+      mediaRecorder.start();
+    });
+
+    // Function to stop recording and capture image
+    stopButton.addEventListener('click', async () => {
+      if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+        mediaRecorder.stop();
+        mediaRecorder.addEventListener('stop', async () => {
+          const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+          audioUrl = URL.createObjectURL(audioBlob);
+          playButton.disabled = false; // Enable the play button
+
+          const image = captureImage();
+          await sendData(audioBlob, image);
+        });
+      }
+    });
+
+    // Function to play the recorded audio
+    playButton.addEventListener('click', () => {
+      const audio = new Audio(audioUrl);
+      audio.play();
+    });
+
+    // Function to setup webcam
+    async function setupWebcam() {
+      const video = document.getElementById('video');
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      video.srcObject = stream;
+    }
+
+    // Function to capture an image from the webcam
+    function captureImage() {
+      const video = document.getElementById('video');
+      const canvas = document.createElement('canvas');
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      const context = canvas.getContext('2d');
+      context.drawImage(video, 0, 0, canvas.width, canvas.height);
+      return canvas.toDataURL('image/jpeg');
+    }
+
+    // Function to send audio and image to the server
+    async function sendData(audioBlob, image) {
+      const data = {
+        audio: await blobToBase64(audioBlob),
+        image
+      };
+      const options = {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)
+      };
+
+      const response = await fetch('http://localhost:5000/advice', options);
+      const json = await response.json();
+      console.log(json);
+
+    const speech = new SpeechSynthesisUtterance()
+    const emotion = json.emotion
+    speech.text = `You are a ${emotion} person`
+
+    speechSynthesis.speak(speech)
+    }
+
+    // Utility function to convert Blob to Base64
+    function blobToBase64(blob) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+      });
+    }
+
+    setupWebcam();
+  </script>
+</body>
+</html>

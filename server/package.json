@@ -27,6 +27,7 @@
     "google": "^2.1.0",
     "google-assistant": "^0.7.0",
     "https": "^1.0.0",
+    "mongoose": "^8.4.0",
     "node-fetch": "^3.3.2",
     "node-webcam": "^0.8.2",
     "openai": "^4.47.1",
