@@ -20,7 +20,7 @@ class Open {
 		// Add user message to history
 		this.history.push({ role: 'user', content: userContent });
 
-		    // Call OpenAI API
+		// Call OpenAI API
 		return this.open.chat.completions.create({
 			model: 'gpt-3.5-turbo',
 			messages: this.history
@@ -33,7 +33,7 @@ class Open {
 			return assistantMessage;
 			}).catch((error) => {
 			return error;
-		}); //
+		}); 
 	  }
 }
 
