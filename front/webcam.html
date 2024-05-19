@@ -4,17 +4,63 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Webcam Capture</title>
+  <link rel="stylesheet" href="output.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
+  </style>
+  <script src="https://kit.fontawesome.com/4b3e1776ef.js" crossorigin="anonymous"></script>
+
+  <title>[INSERT APP NAME HERE]</title>
 </head>
 
-<body>
-  <video id="video" width="640" height="480" autoplay></video>
+<body class="bg-dark w-full p-4">
+ <div class="mx-auto flex">
+  <div class="w-1/2">
+    <video class="mx-auto w-[640px] h-[480px] rounded-lg border-black border-2" id="video" width="640" height="480" autoplay></video>
 
-  <div>
-    <button id="record">Record</button>
-    <button id="stop">Stop</button>
-    <button id="play" disabled>Play Recording</button>
+    <div class="mx-auto my-2 w-fit">
+      <button class="inline-flex items-center justify-center px-3 py-1 mr-2 my-2 text-sm font-medium leading-5 text-[#F8F4E3] bg-secondary/10 hover:bg-secondary/20 rounded-full" id="record">Record</button>
+      <button class="inline-flex items-center justify-center px-3 py-1 mr-2 my-2 text-sm font-medium leading-5 text-[#F8F4E3] bg-secondary/10 hover:bg-secondary/20 rounded-full" id="stop">Stop</button>
+      <button class="inline-flex items-center justify-center px-3 py-1 mr-2 my-2 text-sm font-medium leading-5 text-[#F8F4E3] bg-secondary/10 rounded-full" id="play" disabled>Play Recording</button>
+    </div>
   </div>
+  <div class="w-1/2">
+    <h1 class="mx-auto text-4xl text-accent text-center">Chat</h1>
+    <div class="mx-auto my-2 w-full">
+
+      <div class="flex items-center justify-start my-2">
+        <div>
+          <img src="https://via.placeholder.com/150" alt="Assistant" class="w-16 h-16 rounded-full">
+        </div>
+
+        <div class="ml-4">
+          <p class="text-[#F8F4E3]">Hello! How can I help you today?</p>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-start my-2">
+        <div>
+          <img src="https://via.placeholder.com/150" alt="User" class="w-16 h-16 rounded-full">
+        </div>
+
+        <div class="ml-4">
+          <p class="text-[#F8F4E3]">Hello! I need help with something.</p>
+        </div>
+
+      </div>
+
+      <div class="flex items-center justify-start my-2">
+        <div>
+          <img src="https://via.placeholder.com/150" alt="Assistant" class="w-16 h-16 rounded-full">
+        </div>
+
+        <div class="ml-4">
+          <p class="text-[#F8F4E3]">Sure! Please provide me with more information.</p>
+        </div>
+      </div>
+
+    </div>
+ </div>
 
   <div id="audio"></div>
 
@@ -49,6 +95,7 @@
           const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
           audioUrl = URL.createObjectURL(audioBlob);
           playButton.disabled = false; // Enable the play button
+          playButton.classList.add('hover:bg-secondary/20');
 
           const image = captureImage();
           await sendData(audioBlob, image);
