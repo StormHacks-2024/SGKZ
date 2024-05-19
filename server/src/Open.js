@@ -53,7 +53,13 @@ class Open {
 		  await insertChat(uuid, userContent, assistantMessage,  audio);
 		  return assistantMessage;
 		}).catch(error => error);
-	  }
+	}
+
+	async query(uuid) {
+		
+		const messages = await getChatMessages(uuid);
+		return messages
+	}
 }
 	
 
