@@ -232,6 +232,41 @@ function App() {
         }
     };
 
+    const handleSummarize = async () => {
+        console.log('response')
+
+        try {
+            // Send a POST request to the server with the UUID of the chat session
+            const response = await fetch('http://localhost:5000/summarizeChat', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                credentials: 'include'
+            });
+            console.log(response)
+    
+            if (!response.ok) {
+                // Handle responses that are not 2xx
+                throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+    
+            const data = await response.json(); // Parsing the JSON response body
+    
+            // Check if there's a summary to read
+            if (data.summary) {
+                const speech = new SpeechSynthesisUtterance(data.summary);
+                speech.onend = () => console.log("Finished reading the summary.");
+                speech.onerror = (event) => console.error('Speech synthesis failed:', event.error);
+                speechSynthesis.speak(speech);
+            } else {
+                console.log('No summary provided.');
+            }
+        } catch (error) {
+            console.error('Error summarizing the chat:', error);
+        }
+    };
+    
     const captureImage = () => {
         const canvas = document.createElement("canvas");
         canvas.width = videoRef.current.videoWidth;
@@ -283,6 +318,12 @@ function App() {
                             onClick={handlePlayEverything}>
                             <i className="fa-solid fa-microphone-lines pr-1"></i>
                             Play Full Conversation
+                        </button>
+                        <button
+                            className="inline-flex items-center justify-center px-3 py-1 mr-2 my-2 text-sm font-medium leading-5 text-[#F8F4E3] bg-secondary/10 hover:bg-secondary/20 rounded-full"
+                            onClick={handleSummarize}>
+                            <i className="fa-solid fa-microphone-lines pr-1"></i>
+                            Summerize Performance
                         </button>
                     </div>
                 </div>
