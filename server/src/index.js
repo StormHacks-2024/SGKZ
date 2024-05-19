@@ -31,8 +31,8 @@ app.get('/', async (req, res) => {
 	// transcribe the audio
 
 	const {image, audio} = req.body;
-	fs.writeFileSync('audio.wav', audio, 'base64');
-	const audioStream = fs.createReadStream('audio.wav');
+	fs.writeFileSync('audio.webm', audio, 'base64');
+	const audioStream = fs.createReadStream('audio.webm');
 
 	const transcription = await open.transcribeAudio(audioStream); // expects a stream
 	res.json({ transcription });
@@ -46,11 +46,13 @@ app.listen(PORT, () => {
 })
 
 app.post('/chat', async (req, res) => {
-	const uuid = getUUIDFromCookie(req);
+	// const uuid = getUUIDFromCookie(req);
+	console.log(req.body);
+	console.log(req);
 	const { image, audio } = req.body; // Get content from request body
 	try {
 
-
+		console.log(audio);
 		const base64Audio = audio.replace(/^data:audio\/webm;base64,/, "");
     
 		// Decode the Base64 audio data
@@ -73,7 +75,7 @@ app.post('/chat', async (req, res) => {
 	} catch (error) {
 		res.status(500).json({ error: error.message });
 	}
-	res.cookie('uuid', uuid);
+	// res.cookie('uuid', uuid);
 });
 //
 
