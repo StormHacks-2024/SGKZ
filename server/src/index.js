@@ -7,6 +7,7 @@ import fs from 'fs';
 import { getUUIDFromCookie } from './utils.js';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
+import { getChatMessages } from './mongo.js';
 
 
 const { default:VAD } = await import('node-vad');
@@ -50,63 +51,66 @@ app.post('/chat', async (req, res) => {
 	const { image, audio } = req.body; // Get content from request body
 	try {
 		const base64Audio = audio.replace(/^data:audio\/webm;base64,/, "");
-		const audioBuffer = Buffer.from(base64Audio, 'base64');
-		const audioPath = 'audio.webm';
-    	fs.writeFileSync(audioPath, audioBuffer);
-		const audioStream = fs.createReadStream(audioPath);
-		const transcription = await open.transcribeAudio(audioStream);
-		console.log(transcription);
-
+        const audioBuffer = Buffer.from(base64Audio, 'base64');
+        const audioPath = 'audio.webm';
+        fs.writeFileSync(audioPath, audioBuffer);
+        const audioStream = fs.createReadStream(audioPath);
+        const transcription = await open.transcribeAudio(audioStream);
 		const emotion = await captureAndAnalyze(image);
-
-		const content = `${transcription} \n ${emotion}`;
-		const response = await open.chat(content);
-		res.cookie('uuid', uuid);
-		res.json({ response, uuid, transcription });
+		const content = `${emotion}: ${transcription}`;
+		if(content.includes('error') || content.includes('Error')) {
+			console.log(content)
+			res.cookie('uuid', uuid);
+			res.status(400).json({ error: "Could not understand the audio" });
+		} else {
+			const response = await open.chat(uuid, content, audioStream, audioBuffer);
+			res.cookie('uuid', uuid);
+			res.json({ response, uuid, transcription });
+		}	
 	} catch (error) {
 		res.status(500).json({ error: error.message });
 	}
 });
-//
 
-const wss = new WebSocketServer({ port: 1234 });
-
-const CHUNK_SIZE = 8736;  // Define a manageable chunk size
-let bufferState = Buffer.alloc(0);wss.on('connection', (ws) => {
-	ws.on('message', (message) => {
-	  if (Buffer.isBuffer(message)) {
-		// Combine the new message with any remaining data from the previous chunk
-		bufferState = Buffer.concat([bufferState, message]);
-  
-		while (bufferState.length >= CHUNK_SIZE) {
-		  const chunk = bufferState.slice(0, CHUNK_SIZE);
-		  bufferState = bufferState.slice(CHUNK_SIZE);
-  
-		  try {
-			const floatBuffer = vad.toFloatBuffer(chunk);
-			vad.processAudio(floatBuffer, 16000)
-			  .then((res) => {
-				console.log('VAD result:', res);
-			  })
-			  .catch((err) => {
-				console.error('Error processing audio:', err);
-			  });
-		  } catch (err) {
-			console.error('Error in VAD processing:', err);
-		  }
-		}
-	  } else {
-		console.error('Received message is not a buffer');
-	  }
-	});
-  });
-wss.on('close', () => {
-	console.log('Client disconnected');
+app.get('/history'	, async (req, res) => {
+	const uuid = getUUIDFromCookie(req);
+	const history = await getChatMessages(uuid);
+	res.json({ history });
 });
 
-console.log('WebSocket server running on ws://localhost:1234');
+setInterval(() => {
+	captureAndAnalyze();
+}, 5000);
 
-// setInterval(() => {
-// 	captureAndAnalyze();
-// }, 5000);
+app.post('/queryVoicesAndAI', async (req, res) => {
+    try {
+		const uuid = getUUIDFromCookie(req);
+        const chats = await open.queryVoiceAndAiMessages(uuid); // Assuming this function returns the needed data
+        console.log("hello")
+		const responseData = chats.map(chat => {
+			
+            return {
+                audioBuffer: chat.audio[0],
+                messages: chat.messages.filter(msg => msg.role === 'assistant').map(msg => msg.content)
+            };
+        });
+        res.json({ responseData });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.post('/summarizeChat', async (req, res) => {
+    const  uuid  = getUUIDFromCookie(req);
+	console.log('summarizeChat', uuid)
+    const summary = await open.queryMessages(uuid);
+    if (summary) {
+        res.json({ summary });
+    } else {
+        res.status(404).json({ message: 'Unable to summarize the chat' });
+    }
+});
+
+
+
 // testing

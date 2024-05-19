@@ -15,6 +15,7 @@ function App() {
     const [isRecording, setIsRecording] = useState(false);
     const [waitingForResponse, setWaitingForResponse] = useState(false);
     const [chats, setChats] = useState([]);
+    const [assistantMessages, setAssistantMessages] = useState([]);
 
     let voiceProbability = 0
     let counter = 0
@@ -61,6 +62,10 @@ function App() {
                     video: true,
                 });
                 videoRef.current.srcObject = stream;
+
+                await fetchHistory();
+
+
             } catch (error) {
                 console.error("Error accessing webcam: ", error);
             }
@@ -115,6 +120,14 @@ function App() {
               options
           );
           const json = await response.json();
+
+          if(response.status === 400) {
+            console.error("Error sending audio data to server: ", json.error)
+            audioChunksRef.current = []
+            setWaitingForResponse(false)
+            handleRecord()
+            return
+          }
           console.log(json);
 
           const speech = new SpeechSynthesisUtterance();
@@ -126,6 +139,7 @@ function App() {
 
           speech.onend = () => {
             console.log("Stopped reading response")
+            setWaitingForResponse(false)
             handleRecord()
           }
 
@@ -146,6 +160,45 @@ function App() {
           "Error sending audio data to server: ",
           e
       );
+    }
+  };
+    const fetchHistory = async () => {
+        const uuid = document.cookie.split("=")[1];
+        console.log(uuid);
+
+        const options = {
+            method: "GET",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            credentials: "include",
+        };
+
+        try {
+            const response = await fetch(
+                "http://localhost:5000/history",
+                options
+            );
+            const json = await response.json();
+            console.log(json);
+
+            const history = json.history;
+            // for each message, if it is a user message, set the role to user
+            history.forEach((message) => {
+                if (message.role === "user") {
+                    message.user = "User";
+                    // look at the message content and split it into emotion and message
+                    const split = message.content.split(":");
+                    message.content = split[1];
+                } else {
+                    message.user = "System";
+                }
+            });
+
+            console.log(history)
+            setChats(history);
+        } catch (error) {
+            console.error("Error fetching chat history: ", error);
         }
     }
 
@@ -219,16 +272,17 @@ function App() {
     };
 
     const handleStop = () => {
+        if (mediaRecorderRef.current) {
+          mediaRecorderRef.current.stop();
+          // recorder.stop()
+          setIsRecording(false);
+          console.log("Recording stopped");
+      }
         if(cobraRef.current) {
           console.log("Stopping cobra")
           cobraRef.current.release()
         }
-        if (mediaRecorderRef.current) {
-            mediaRecorderRef.current.stop();
-            // recorder.stop()
-            setIsRecording(false);
-            console.log("Recording stopped");
-        }
+        
     };
 
     const handlePlayRecording = () => {
@@ -238,6 +292,89 @@ function App() {
         }
     };
 
+    const handlePlayEverything = async () => {
+        try {
+            const response = await fetch('http://localhost:5000/queryVoicesAndAI', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                credentials: 'include'
+            });
+            const result = await response.json();
+            const { responseData } = result;
+            setAssistantMessages(responseData);
+
+
+
+            // Function to play the audio and then the speech
+            const playAudioAndSpeech = async (item) => {
+                return new Promise(async (resolve, reject) => {
+
+                    console.log(item);
+                    // Create and play the audio element
+                    const audio = new Audio(`data:audio/wav;base64,${item.audioBuffer}`);
+                    console.log("audio:", audio);
+                    audio.onended = async () => {
+                        // Once audio ends, check if there are messages
+                        if (item.messages.length > 0) {
+                            const speech = new SpeechSynthesisUtterance(item.messages.join(' '));
+                            speech.onend = () => resolve(); // Resolve the promise when speech ends
+                            speech.onerror = () => reject('Speech synthesis failed'); // Reject on speech error
+                            speechSynthesis.speak(speech);
+                        } else {
+                            resolve(); // Resolve the promise immediately if no messages
+                        }
+                    };
+                    audio.onerror = () => reject('Audio playback failed'); // Reject on audio error
+                    audio.play();
+                });
+            };
+
+            // Sequentially play each audio and speech synthesis
+            for (const item of responseData) {
+                await playAudioAndSpeech(item); // Wait for one audio and its speech to complete before the next
+            }
+        } catch (error) {
+            console.error('Error fetching assistant messages: ', error);
+        }
+    };
+
+    const handleSummarize = async () => {
+        console.log('response')
+
+        try {
+            // Send a POST request to the server with the UUID of the chat session
+            const response = await fetch('http://localhost:5000/summarizeChat', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                credentials: 'include'
+            });
+            console.log(response)
+    
+            if (!response.ok) {
+                // Handle responses that are not 2xx
+                throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+    
+            const data = await response.json(); // Parsing the JSON response body
+    
+            // Check if there's a summary to read
+            if (data.summary) {
+                const speech = new SpeechSynthesisUtterance(data.summary);
+                speech.onend = () => console.log("Finished reading the summary.");
+                speech.onerror = (event) => console.error('Speech synthesis failed:', event.error);
+                speechSynthesis.speak(speech);
+            } else {
+                console.log('No summary provided.');
+            }
+        } catch (error) {
+            console.error('Error summarizing the chat:', error);
+        }
+    };
+    
     const captureImage = () => {
         const canvas = document.createElement("canvas");
         if(!videoRef.current) {
@@ -252,6 +389,7 @@ function App() {
 
     return (
         <div className="bg-dark p-7">
+            <h1 className="text-5xl font-bold text-center text-accent mb-8">AI Need Help</h1>
             <div className="mx-auto md:flex">
                 <div className="w-full md:w-1/2 my-auto">
                     <video
@@ -262,39 +400,52 @@ function App() {
                     <div
                         {...(isRecording
                             ? {
-                                  className:
-                                      "mx-auto my-2 w-fit text-red-500 animate-pulse",
-                              }
+                                className:
+                                    "mx-auto my-2 w-fit text-red-500 animate-pulse",
+                            }
                             : { className: "hidden" })}>
                         <i className="fa-solid fa-video pr-1"></i>
                     </div>
-                    <div className="mx-auto my-2 w-fit">
-                        <button
-                            className="inline-flex items-center justify-center px-3 py-1 mr-2 my-2 text-sm font-medium leading-5 text-[#F8F4E3] bg-secondary/10 hover:bg-secondary/20 rounded-full"
-                            onClick={handleRecord}>
-                            <i className="fa-solid fa-microphone-lines pr-1"></i>
-                            Record
-                        </button>
-                        <button
-                            className="inline-flex items-center justify-center px-3 py-1 mr-2 my-2 text-sm font-medium leading-5 text-[#F8F4E3] bg-secondary/10 hover:bg-secondary/20 rounded-full"
-                            onClick={handleStop}>
-                            <i className="fa-solid fa-stop pr-1"></i>
-                            Stop
-                        </button>
-                        <button
-                            className={
-                                isDisabled
-                                    ? "inline-flex items-center justify-center px-3 py-1 mr-2 my-2 text-sm font-medium leading-5 text-[#F8F4E3] bg-secondary/10 rounded-full"
-                                    : "inline-flex items-center justify-center px-3 py-1 mr-2 my-2 text-sm font-medium leading-5 text-[#F8F4E3] bg-secondary/10 hover:bg-secondary/20 rounded-full"
-                            }
-                            onClick={handlePlayRecording}
-                            disabled={isDisabled}>
-                            <i className="fa-solid fa-play pr-1"></i>
-                            Play Last Recording
-                        </button>
+                    <div className="mx-auto my-2 w-fit flex flex-col items-center justify-center">
+                        <div className="flex">
+                            <button
+                                className={`inline-flex items-center justify-center px-3 py-1 mr-2 my-2 text-sm font-medium leading-5 text-[#F8F4E3] ${isRecording ? 'bg-red-500' : 'bg-secondary/10'} hover:bg-secondary/20 rounded-full`}
+                                onClick={handleRecord}>
+                                <i className="fa-solid fa-microphone-lines pr-1"></i>
+                                Record
+                            </button>
+                            <button
+                                className="inline-flex items-center justify-center px-3 py-1 mr-2 my-2 text-sm font-medium leading-5 text-[#F8F4E3] bg-secondary/10 hover:bg-secondary/20 rounded-full"
+                                onClick={handleStop}>
+                                <i className="fa-solid fa-stop pr-1"></i>
+                                Stop
+                            </button>
+                        </div>
+                        <div className="flex">
+                            <button
+                                className="inline-flex items-center justify-center px-3 py-1 mr-2 my-2 text-sm font-medium leading-5 text-[#F8F4E3] bg-secondary/10 hover:bg-secondary/20 rounded-full"
+                                onClick={handlePlayRecording}>
+                                <i className="fa-solid fa-play pr-1"></i>
+                                Play Last Recording
+                            </button>
+                            <button
+                                className="inline-flex items-center justify-center px-3 py-1 mr-2 my-2 text-sm font-medium leading-5 text-[#F8F4E3] bg-secondary/10 hover:bg-secondary/20 rounded-full"
+                                onClick={handlePlayEverything}>
+                                <i className="fa-solid fa-play pr-1"></i>
+                                Play Full Conversation
+                            </button>
+                        </div>
+                        <div className="flex">
+                            <button
+                                className="inline-flex items-center justify-center px-3 py-1 mr-2 my-2 text-sm font-medium leading-5 text-[#F8F4E3] bg-secondary/10 hover:bg-secondary/20 rounded-full"
+                                onClick={handleSummarize}>
+                                <i className="fa-solid fa-play pr-1"></i>
+                                Summerize Performance
+                            </button>
+                        </div>
                     </div>
                 </div>
-                <div className="w-full md:w-1/2">
+                <div className="w-full md:w-1/2 border-2 border-white rounded pt-4 pb-0">
                     <h1 className="mx-auto text-5xl text-accent text-center">
                         <i className="fa-solid fa-comments pr-1"></i>
                         Chat
@@ -306,7 +457,7 @@ function App() {
                                 key={index}
                                 className="flex items-center justify-between my-4">
                                 <div className="text-[#F8F4E3] text-3xl w-[5%]">
-                                    {chat.user === "User" ? (
+                                    {chat.user === "User" || chat.role === "user" ? (
                                         <i className="fa-solid fa-user"></i>
                                     ) : (
                                         <i className="fa-solid fa-robot"></i>
@@ -315,9 +466,9 @@ function App() {
                                 {console.log(chat)}
                                 <div className="w-[90%]">
                                     <p className={
-                                      chat.user === "User" ? "text-secondary" :
-                                      "text-[#F8F4E3]"}>
-                                        {chat.message ?? "No message"}
+                                        chat.user === "User" ? "text-secondary" :
+                                            "text-[#F8F4E3]"}>
+                                        {chat.message || chat.content}
                                     </p>
                                 </div>
                             </div>
