@@ -58,10 +58,6 @@ function App() {
         });
         console.log("audioBlob:",audioBlob)
 
-        // how can I send a cookie with the request?
-        // answer: use document.cookie
-
-        // write the code to include a cookie with the request here:
         const uuid = document.cookie.split('=')[1];
         console.log(uuid);
 
