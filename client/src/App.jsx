@@ -153,7 +153,7 @@ function App() {
             <div className="mx-auto md:flex">
                 <div className="w-full md:w-1/2 my-auto">
                     <video
-                        className="mx-auto w-3/4 aspect-4/3 rounded-lg border-black border-2"
+                        className="mx-auto w-3/4 aspect-4/3 rounded-xl border-black border-2"
                         ref={videoRef}
                         id="video"
                         autoPlay></video>
@@ -197,7 +197,7 @@ function App() {
                         <i className="fa-solid fa-comments pr-1"></i>
                         Chat
                     </h1>
-                    <div className="mx-auto my-2 mt-5 w-full px-2 md:max-h-[700px] md:overflow-y-scroll">
+                    <div className="mx-auto my-2 mt-5 w-full px-2 rounded-xl md:max-h-[700px] md:overflow-y-scroll">
                         {chats.map((chat, index) => (
                             <div
                                 key={index}
