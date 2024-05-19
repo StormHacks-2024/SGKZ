@@ -56,7 +56,7 @@ app.post('/chat', async (req, res) => {
 
 		const emotion = await captureAndAnalyze(image);
 
-		const content = `${transcription} \n ${emotion}`;
+		const content = `${emotion} +: + ${transcription}`;
 
 		const response = await open.chat(content);
 		res.json({ response });
