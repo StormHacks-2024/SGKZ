@@ -33,7 +33,7 @@ class Open {
 			return assistantMessage;
 			}).catch((error) => {
 			return error;
-		});
+		}); //
 	  }
 }
 
