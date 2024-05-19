@@ -41,7 +41,7 @@ function App() {
       mediaRecorderRef.current.onstop = async () => {
         console.log("Recorder stopped")
         console.log("chunks:",audioChunksRef.current.length)
-        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/wav' });
+        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
         setAudioUrl(URL.createObjectURL(audioBlob));
         setIsDisabled(false);
 
@@ -49,22 +49,44 @@ function App() {
         stream.getTracks().forEach(track => track.stop());
 
         const image = captureImage();
-        const audio = audioBlob;
+        // convert audioBlob to base64
+        const audio = await new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result);
+          reader.onerror = error => reject(error);
+          reader.readAsDataURL(audioBlob);
+        });
+        console.log("audioBlob:",audioBlob)
+
+
+
         const data = {
           image: image,
           audio: audio
         }
+
+        console.log(data);
         const options = {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
           },
-          body: JSON.stringify(data)
+          body: JSON.stringify(data),
         };
 
-        const response = await fetch('http://localhost:5000/chat', options);
-        const json = await response.json();
-        console.log(json);
+        try {
+          const response = await fetch('http://localhost:5000/chat', options);
+          const json = await response.json();
+          console.log(json);
+
+          const speech = new SpeechSynthesisUtterance()
+          const emotion = json.response
+          speech.text = emotion;
+    
+          speechSynthesis.speak(speech);
+        } catch (error) {
+          console.error('Error sending audio data to server: ', error);
+        }
       };
 
       mediaRecorderRef.current.start(500);

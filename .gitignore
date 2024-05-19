@@ -7,3 +7,4 @@ server/node_modules/
 server/package-lock.json
 
 server/src/models
+server/models
