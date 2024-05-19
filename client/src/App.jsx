@@ -160,11 +160,13 @@ function App() {
                         <button
                             className="inline-flex items-center justify-center px-3 py-1 mr-2 my-2 text-sm font-medium leading-5 text-[#F8F4E3] bg-secondary/10 hover:bg-secondary/20 rounded-full"
                             onClick={handleRecord}>
+                            <i className="fa-solid fa-microphone-lines pr-1"></i>
                             Record
                         </button>
                         <button
                             className="inline-flex items-center justify-center px-3 py-1 mr-2 my-2 text-sm font-medium leading-5 text-[#F8F4E3] bg-secondary/10 hover:bg-secondary/20 rounded-full"
                             onClick={handleStop}>
+                            <i className="fa-solid fa-stop pr-1"></i>
                             Stop
                         </button>
                         <button
@@ -175,23 +177,25 @@ function App() {
                             }
                             onClick={handlePlayRecording}
                             disabled={isDisabled}>
+                            <i className="fa-solid fa-play pr-1"></i>
                             Play Recording
                         </button>
                     </div>
                 </div>
                 <div className="w-1/2">
                     <h1 className="mx-auto text-4xl text-accent text-center">
+                    <i className="fa-solid fa-comments pr-1"></i>
                         Chat
                     </h1>
                     <div className="mx-auto my-2 w-full">
                         {chats.map((chat, index) => (
                             <div key={index} className="flex items-center justify-start my-2">
-                                <div>
-                                    <img
-                                        src="https://via.placeholder.com/150"
-                                        alt={chat.user}
-                                        className="w-16 h-16 rounded-full"
-                                    />
+                                <div className="text-[#F8F4E3] text-3xl">
+                                  {(chat.user === "User") ?
+                                    <i className="fa-solid fa-user"></i>
+                                  :
+                                    <i className="fa-solid fa-robot"></i>
+                                  }
                                 </div>
 
                                 <div className="ml-4">
