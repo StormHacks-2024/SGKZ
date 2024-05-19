@@ -43,12 +43,10 @@ app.listen(PORT, () => {
 	console.log(`http://localhost:${PORT}`);
 })
 
-
-
-
 app.post('/chat', async (req, res) => {
 	const { image, audio } = req.body; // Get content from request body
 	try {
+
 
 		const base64Audio = audio.replace(/^data:audio\/webm;base64,/, "");
     
@@ -60,12 +58,13 @@ app.post('/chat', async (req, res) => {
 		fs.writeFileSync(audioPath, audioBuffer);
 		
 		const audioStream = fs.createReadStream('audio.webm');
+
 		const transcription = await open.transcribeAudio(audioStream);
 
 		const emotion = await captureAndAnalyze(image);
 
-		const content = `${transcription} \n ${emotion}`;
 
+		const content = `${transcription} \n ${emotion}`;
 		const response = await open.chat(content);
 		res.json({ response });
 	} catch (error) {

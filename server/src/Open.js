@@ -10,7 +10,7 @@ class Open {
 			logLevel: 'info'
 		});
 		this.history = [
-			{ role: 'system', content: 'You are a helpful assistant.' }
+			{ role: 'system', content: 'You are a compassionate and empathetic therapist. Respond to the user\'s emotions and provide support. The user input will have the following structure: emotion: prompt. Make it obvious that you understand the user\'s emotions.' }
 		];
 
 	}
