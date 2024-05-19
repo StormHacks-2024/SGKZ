@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import { captureAndAnalyze } from './emotionDetection.js';
 import { Open } from './Open.js';
 import fs from 'fs';
+import { getUUIDFromCookie } from './utils.js';
 
 
 dotenv.config();
@@ -24,6 +25,7 @@ app.use((req, res, next) => {
 });
 
 app.get('/', async (req, res) => {
+	const uuid = getUUIDFromCookie(req);
 	// expect to recieve a base 64 audio string
 	// save the audio to a file
 	// transcribe the audio
@@ -47,6 +49,7 @@ app.listen(PORT, () => {
 
 
 app.post('/chat', async (req, res) => {
+	const uuid = getUUIDFromCookie(req);
 	const { image, audio } = req.body; // Get content from request body
 	try {
 
@@ -63,6 +66,7 @@ app.post('/chat', async (req, res) => {
 	} catch (error) {
 		res.status(500).json({ error: error.message });
 	}
+	res.cookie('uuid', uuid);
 });
 //
 
