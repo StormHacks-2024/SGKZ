@@ -7,6 +7,7 @@ import fs from 'fs';
 import { getUUIDFromCookie } from './utils.js';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
+import { getChatMessages } from './mongo.js';
 
 
 dotenv.config();
@@ -71,6 +72,11 @@ app.post('/chat', async (req, res) => {
 	}
 });
 
+app.get('/history'	, async (req, res) => {
+	const uuid = getUUIDFromCookie(req);
+	const history = await getChatMessages(uuid);
+	res.json({ history });
+});
 setInterval(() => {
 	captureAndAnalyze();
 }, 5000);

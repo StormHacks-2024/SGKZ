@@ -16,6 +16,10 @@ function App() {
                     video: true,
                 });
                 videoRef.current.srcObject = stream;
+
+                await fetchHistory();
+
+
             } catch (error) {
                 console.error("Error accessing webcam: ", error);
             }
@@ -23,6 +27,46 @@ function App() {
 
         setupWebcam();
     }, []);
+
+    const fetchHistory = async () => {
+        const uuid = document.cookie.split("=")[1];
+        console.log(uuid);
+
+        const options = {
+            method: "GET",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            credentials: "include",
+        };
+
+        try {
+            const response = await fetch(
+                "http://localhost:5000/history",
+                options
+            );
+            const json = await response.json();
+            console.log(json);
+
+            const history = json.history;
+            // for each message, if it is a user message, set the role to user
+            history.forEach((message) => {
+                if (message.role === "user") {
+                    message.user = "User";
+                    // look at the message content and split it into emotion and message
+                    const split = message.content.split(":");
+                    message.content = split[1];
+                } else {
+                    message.user = "System";
+                }
+            });
+
+            console.log(history)
+            setChats(history);
+        } catch (error) {
+            console.error("Error fetching chat history: ", error);
+        }
+    }
 
     const handleRecord = async () => {
         try {
@@ -203,7 +247,7 @@ function App() {
                                 key={index}
                                 className="flex items-center justify-between my-4">
                                 <div className="text-[#F8F4E3] text-3xl w-[5%]">
-                                    {chat.user === "User" ? (
+                                    {chat.user === "User" || chat.role === "user" ? (
                                         <i className="fa-solid fa-user"></i>
                                     ) : (
                                         <i className="fa-solid fa-robot"></i>
@@ -214,7 +258,7 @@ function App() {
                                     <p className={
                                       chat.user === "User" ? "text-secondary" :
                                       "text-[#F8F4E3]"}>
-                                        {chat.message}
+                                        {chat.message || chat.content}
                                     </p>
                                 </div>
                             </div>
