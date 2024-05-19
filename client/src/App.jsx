@@ -190,8 +190,8 @@ function App() {
                     </h1>
                     <div className="mx-auto my-2 w-full">
                         {chats.map((chat, index) => (
-                            <div key={index} className="flex items-center justify-start my-2">
-                                <div className="text-[#F8F4E3] text-3xl">
+                            <div key={index} className="flex items-center justify-between my-2">
+                                <div className="text-[#F8F4E3] text-3xl w-[5%]">
                                   {(chat.user === "User") ?
                                     <i className="fa-solid fa-user"></i>
                                   :
@@ -199,7 +199,7 @@ function App() {
                                   }
                                 </div>
 
-                                <div className="ml-4">
+                                <div className="w-[90%]">
                                     <p className="text-[#F8F4E3]">
                                         {chat.message}
                                     </p>
