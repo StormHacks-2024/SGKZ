@@ -15,7 +15,7 @@ function App() {
                     video: true,
                 });
                 videoRef.current.srcObject = stream;
-                
+
             } catch (error) {
                 console.error("Error accessing webcam: ", error);
             }
@@ -23,15 +23,6 @@ function App() {
 
         setupWebcam();
     }, []);
-
-    const updateChats = async () => {
-              
-      const oldChats = [...chats];
-      oldChats.push({ user: "System", message: "Hello!, I am here to help!" })
-      setChats(oldChats);
-    }
-
-    updateChats();
 
     const handleRecord = async () => {
         try {
@@ -105,6 +96,12 @@ function App() {
                     speech.text = emotion;
 
                     speechSynthesis.speak(speech);
+
+                    // Add the chat to the chat list
+                    setChats((prevChats) => [
+                        ...prevChats,
+                        { user: "System", message: emotion },
+                    ]);
 
                     // save cookie
                     document.cookie = `uuid=${json.uuid}; max-age=36000; path=/`;
@@ -187,27 +184,23 @@ function App() {
                         Chat
                     </h1>
                     <div className="mx-auto my-2 w-full">
-                        {chats.forEach((chat) => {
-                          console.log(chat)
-                            return (
-                                <div className="flex items-center justify-start my-2">
-                                    <div>
-                                        <img
-                                            src="https://via.placeholder.com/150"
-                                            alt={chat.user}
-                                            className="w-16 h-16 rounded-full"
-                                        />
-                                    </div>
-
-                                    <div className="ml-4">
-                                        <p className="text-[#F8F4E3]">
-                                            {chat.message}
-                                        </p>
-                                    </div>
+                        {chats.map((chat, index) => (
+                            <div key={index} className="flex items-center justify-start my-2">
+                                <div>
+                                    <img
+                                        src="https://via.placeholder.com/150"
+                                        alt={chat.user}
+                                        className="w-16 h-16 rounded-full"
+                                    />
                                 </div>
-                            );
-                        })}
 
+                                <div className="ml-4">
+                                    <p className="text-[#F8F4E3]">
+                                        {chat.message}
+                                    </p>
+                                </div>
+                            </div>
+                        ))}
                     </div>
                 </div>
             </div>

@@ -21,10 +21,8 @@ app.use(express.json({ limit: '512mb' }));
 
 app.use(express.urlencoded({ extended: true }));
 app.use(cors({
-	origin: 'http://localhost:3000', // set the allowed origin to your client's address
+	origin: 'http://localhost:3000', // exactly match the client's origin
 	credentials: true, // allow credentials
-	methods: ['GET', 'POST', 'PUT', 'DELETE'], // allowed methods
-	allowedHeaders: ['Content-Type'] // allowed headers
   }));
 
 app.get('/', async (req, res) => {
