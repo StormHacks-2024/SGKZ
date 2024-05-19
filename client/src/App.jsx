@@ -1,9 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
-
-import {CobraWorker} from '@picovoice/cobra-web';
-import {WebVoiceProcessor} from '@picovoice/web-voice-processor';
-
-
+import { CobraWorker } from '@picovoice/cobra-web';
+import { WebVoiceProcessor } from '@picovoice/web-voice-processor';
 
 function App() {
     const videoRef = useRef(null);
@@ -17,42 +14,41 @@ function App() {
     const [chats, setChats] = useState([]);
     const [assistantMessages, setAssistantMessages] = useState([]);
 
-    let voiceProbability = 0
-    let counter = 0
-    let wasTalking = false
+    let voiceProbability = 0;
+    let counter = 0;
+    let wasTalking = false;
+
     function voiceProbabilityCallback(vp) {
-      // take action based on voice probability
-      voiceProbability = vp
-      // console.log(voiceProbability)
+        voiceProbability = vp;
     }
 
     function writeMessage(message) {
-      console.log(message);
+        console.log(message);
     }
 
     async function startCobra(accessKey) {
-      writeMessage("Cobra is loading. Please wait...");
-      try {
-        cobraRef.current = await CobraWorker.create(
-          accessKey,
-          voiceProbabilityCallback
+        writeMessage("Cobra is loading. Please wait...");
+        try {
+            cobraRef.current = await CobraWorker.create(
+                accessKey,
+                voiceProbabilityCallback
+            );
+        } catch (error) {
+            writeMessage(error);
+            throw new Error(error);
+        }
+        writeMessage("Cobra worker ready!");
+
+        writeMessage(
+            "WebVoiceProcessor initializing. Microphone permissions requested ..."
         );
-      } catch (error) {
-        writeMessage(error);
-        throw new Error(error);
-      }
-      writeMessage("Cobra worker ready!");
-  
-      writeMessage(
-        "WebVoiceProcessor initializing. Microphone permissions requested ..."
-      );
-  
-      try {
-        WebVoiceProcessor.subscribe(cobraRef.current);
-        writeMessage("WebVoiceProcessor ready and listening!");
-      } catch (e) {
-        writeMessage("WebVoiceProcessor failed to initialize: " + e);
-      }
+
+        try {
+            WebVoiceProcessor.subscribe(cobraRef.current);
+            writeMessage("WebVoiceProcessor ready and listening!");
+        } catch (e) {
+            writeMessage("WebVoiceProcessor failed to initialize: " + e);
+        }
     }
 
     useEffect(() => {
@@ -62,10 +58,7 @@ function App() {
                     video: true,
                 });
                 videoRef.current.srcObject = stream;
-
                 await fetchHistory();
-
-
             } catch (error) {
                 console.error("Error accessing webcam: ", error);
             }
@@ -75,93 +68,84 @@ function App() {
     }, []);
 
     const handleSpeechPause = async () => {
-      console.log("Detected pause in speech")
-      console.log(audioChunksRef.current.length)
-      const audioBlob = new Blob(audioChunksRef.current, {
-        type: "audio/webm",
-      });
-      setAudioUrl(URL.createObjectURL(audioBlob));
+        console.log("Detected pause in speech");
+        console.log(audioChunksRef.current.length);
+        const audioBlob = new Blob(audioChunksRef.current, {
+            type: "audio/webm",
+        });
+        setAudioUrl(URL.createObjectURL(audioBlob));
 
-      audioChunksRef.current = [];
+        audioChunksRef.current = [];
 
-      
-      const image = captureImage();
-      // convert audioBlob to base64
-      const audio = await new Promise((resolve, reject) => {
-          const reader = new FileReader();
-          reader.onload = () => resolve(reader.result);
-          reader.onerror = (error) => reject(error);
-          reader.readAsDataURL(audioBlob);
-      });
-      console.log("audioBlob:", audioBlob);
+        const image = captureImage();
+        const audio = await new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = (error) => reject(error);
+            reader.readAsDataURL(audioBlob);
+        });
+        console.log("audioBlob:", audioBlob);
 
-      const uuid = document.cookie.split("=")[1];
-      console.log(uuid);
-      
-      console.log(audio)
-      const data = {
-          image: image,
-          audio: audio,
-      };
+        const uuid = document.cookie.split("=")[1];
+        console.log(uuid);
 
-      // send the cookie and data to the server
-      const options = {
-          method: "POST",
-          headers: {
-              "Content-Type": "application/json",
-          },
-          body: JSON.stringify(data),
-          credentials: "include",
-      };
+        console.log(audio);
+        const data = {
+            image: image,
+            audio: audio,
+        };
 
-      try {
-          const response = await fetch(
-              "http://localhost:5000/chat",
-              options
-          );
-          const json = await response.json();
+        const options = {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify(data),
+            credentials: "include",
+        };
 
-          if(response.status === 400) {
-            console.error("Error sending audio data to server: ", json.error)
-            audioChunksRef.current = []
-            setWaitingForResponse(false)
-            handleRecord()
-            return
-          }
-          console.log(json);
+        try {
+            const response = await fetch(
+                "http://localhost:5000/chat",
+                options
+            );
+            const json = await response.json();
 
-          const speech = new SpeechSynthesisUtterance();
-          const emotion = json.response;
-          speech.text = emotion;
-          
+            if (response.status === 400) {
+                console.error("Error sending audio data to server: ", json.error);
+                audioChunksRef.current = [];
+                setWaitingForResponse(false);
+                handleRecord();
+                return;
+            }
+            console.log(json);
 
-          speechSynthesis.speak(speech);
+            const speech = new SpeechSynthesisUtterance();
+            const emotion = json.response;
+            speech.text = emotion;
 
-          speech.onend = () => {
-            console.log("Stopped reading response")
-            setWaitingForResponse(false)
-            handleRecord()
-          }
+            speechSynthesis.speak(speech);
 
-          // Add the chat to the chat list
-          setChats((prevChats) => [
-              ...prevChats,
-              { user: "User", message: json.transcription },
-              { user: "System", message: emotion },
-          ]);
+            speech.onend = () => {
+                console.log("Stopped reading response");
+                setWaitingForResponse(false);
+                handleRecord();
+            };
 
-          console.log(chats)
+            setChats((prevChats) => [
+                ...prevChats,
+                { user: "User", message: json.transcription },
+                { user: "System", message: emotion },
+            ]);
 
-          // save cookie
-          document.cookie = `uuid=${json.uuid}; max-age=36000; path=/`;
-      // setIsDisabled(false);
-        } catch(e) {
-          console.error(
-          "Error sending audio data to server: ",
-          e
-      );
-    }
-  };
+            console.log(chats);
+
+            document.cookie = `uuid=${json.uuid}; max-age=36000; path=/`;
+        } catch (e) {
+            console.error("Error sending audio data to server: ", e);
+        }
+    };
+
     const fetchHistory = async () => {
         const uuid = document.cookie.split("=")[1];
         console.log(uuid);
@@ -183,11 +167,9 @@ function App() {
             console.log(json);
 
             const history = json.history;
-            // for each message, if it is a user message, set the role to user
             history.forEach((message) => {
                 if (message.role === "user") {
                     message.user = "User";
-                    // look at the message content and split it into emotion and message
                     const split = message.content.split(":");
                     message.content = split[1];
                 } else {
@@ -195,75 +177,58 @@ function App() {
                 }
             });
 
-            console.log(history)
+            console.log(history);
             setChats(history);
         } catch (error) {
             console.error("Error fetching chat history: ", error);
         }
-    }
+    };
 
     const handleRecord = async () => {
         try {
-            // DANGER REMOVE KEY REMOVE KEY REMOVE KEY
-            startCobra('RhTUtHaCMwcEl4t8nk6UnJC0Jgt9u3Cdpy7+lpp1Don2Cil5i0fHtQ==')
+            startCobra('RhTUtHaCMwcEl4t8nk6UnJC0Jgt9u3Cdpy7+lpp1Don2Cil5i0fHtQ==');
             const stream = await navigator.mediaDevices.getUserMedia({
                 audio: true,
             });
 
-            // setAudioChunks([]); // Clear previous chunks
             audioChunksRef.current = [];
             const recorder = new MediaRecorder(stream);
 
             mediaRecorderRef.current = recorder;
             mediaRecorderRef.current.ondataavailable = (event) => {
-                if(waitingForResponse) {
-                  return
+                if (waitingForResponse) {
+                    return;
                 }
-                // console.log(event.data);
-                // console.log(audioChunks)
-                // setAudioChunks(prev => [...prev, event.data]);
-                
+
                 audioChunksRef.current.push(event.data);
                 if (voiceProbability > 0.4) {
-                  console.log("Recording audio chunk")
-                  console.log(audioChunksRef.current);
-                  wasTalking = true
-                  console.log("Speech detected!")
-                  counter = 0
+                    console.log("Recording audio chunk");
+                    console.log(audioChunksRef.current);
+                    wasTalking = true;
+                    console.log("Speech detected!");
+                    counter = 0;
                 } else {
-                  counter += 1
-                  if( counter > 5) {
-
-                    if(wasTalking && audioChunksRef.current.length >= 5) {
-                      setWaitingForResponse(true)
-                      handleStop();
-                      counter = 0
-                      console.log("Stopped talking")
-                      wasTalking = false
-                      
-                      handleSpeechPause()
+                    counter += 1;
+                    if (counter > 5) {
+                        if (wasTalking && audioChunksRef.current.length >= 5) {
+                            setWaitingForResponse(true);
+                            handleStop();
+                            counter = 0;
+                            console.log("Stopped talking");
+                            wasTalking = false;
+                            handleSpeechPause();
+                        }
+                        audioChunksRef.current = [];
                     }
-                    audioChunksRef.current = []
-                  }
                 }
             };
 
             mediaRecorderRef.current.onstop = async () => {
-                // console.log("Recorder stopped");
-                // console.log("chunks:", audioChunksRef.current.length);
-                // const audioBlob = new Blob(audioChunksRef.current, {
-                //     type: "audio/webm",
-                // });
-                // setAudioUrl(URL.createObjectURL(audioBlob));
                 setIsDisabled(false);
-
-                // Stop the audio stream
                 stream.getTracks().forEach((track) => track.stop());
-                
             };
 
             mediaRecorderRef.current.start(500);
-            // Store the recorder in the ref
             setIsRecording(true);
             console.log("Recording started");
         } catch (error) {
@@ -273,16 +238,16 @@ function App() {
 
     const handleStop = () => {
         if (mediaRecorderRef.current) {
-          mediaRecorderRef.current.stop();
-          // recorder.stop()
-          setIsRecording(false);
-          console.log("Recording stopped");
-      }
-        if(cobraRef.current) {
-          console.log("Stopping cobra")
-          cobraRef.current.release()
+            mediaRecorderRef.current.stop();
+            setIsRecording(false);
+            console.log("Recording stopped");
         }
-        
+        if (cobraRef.current) {
+            console.log("Stopping cobra");
+            cobraRef.current.release();
+        }
+
+        audioChunksRef.current = [];
     };
 
     const handlePlayRecording = () => {
@@ -305,42 +270,35 @@ function App() {
             const { responseData } = result;
             setAssistantMessages(responseData);
 
-
-
-            // Function to play the audio and then the speech
             const playAudioAndSpeech = async (item) => {
                 return new Promise(async (resolve, reject) => {
-
                     console.log(item);
-                    // Create and play the audio element
                     const audio = new Audio(`data:audio/wav;base64,${item.audioBuffer}`);
                     console.log("audio:", audio);
                     audio.onended = async () => {
-                        // Once audio ends, check if there are messages
                         if (item.messages.length > 0) {
                             const speech = new SpeechSynthesisUtterance(item.messages.join(' '));
-                            speech.onend = () => resolve(); // Resolve the promise when speech ends
-                            speech.onerror = () => reject('Speech synthesis failed'); // Reject on speech error
+                            speech.onend = () => resolve();
+                            speech.onerror = () => reject('Speech synthesis failed');
                             speechSynthesis.speak(speech);
                         } else {
-                            resolve(); // Resolve the promise immediately if no messages
+                            resolve();
                         }
                     };
-                    audio.onerror = () => reject('Audio playback failed'); // Reject on audio error
+                    audio.onerror = () => reject('Audio playback failed');
                     audio.play();
                 });
             };
 
-            // Sequentially play each audio and speech synthesis
             for (const item of responseData) {
-                await playAudioAndSpeech(item); // Wait for one audio and its speech to complete before the next
+                await playAudioAndSpeech(item);
             }
         } catch (error) {
             console.error('Error fetching assistant messages: ', error);
         }
     };
 
-    const handleDelete = async () =>{
+    const handleDelete = async () => {
         try {
             const response = await fetch('http://localhost:5000/delete', {
                 method: 'POST',
@@ -349,20 +307,18 @@ function App() {
                 },
                 credentials: 'include'
             });
-            console.log(response)
-            setChats([])
-            // history= []
-            window.location.reload()
+            console.log(response);
+            setChats([]);
+            window.location.reload();
         } catch (error) {
             console.error('Error deleting the chat:', error);
         }
-    }
+    };
 
     const handleSummarize = async () => {
-        console.log('response')
+        console.log('response');
 
         try {
-            // Send a POST request to the server with the UUID of the chat session
             const response = await fetch('http://localhost:5000/summarizeChat', {
                 method: 'POST',
                 headers: {
@@ -370,16 +326,14 @@ function App() {
                 },
                 credentials: 'include'
             });
-            console.log(response)
-    
+            console.log(response);
+
             if (!response.ok) {
-                // Handle responses that are not 2xx
                 throw new Error(`HTTP error! Status: ${response.status}`);
             }
-    
-            const data = await response.json(); // Parsing the JSON response body
-    
-            // Check if there's a summary to read
+
+            const data = await response.json();
+
             if (data.summary) {
                 const speech = new SpeechSynthesisUtterance(data.summary);
                 speech.onend = () => console.log("Finished reading the summary.");
@@ -392,11 +346,11 @@ function App() {
             console.error('Error summarizing the chat:', error);
         }
     };
-    
+
     const captureImage = () => {
         const canvas = document.createElement("canvas");
-        if(!videoRef.current) {
-          return
+        if (!videoRef.current) {
+            return;
         }
         canvas.width = videoRef.current.videoWidth;
         canvas.height = videoRef.current.videoHeight;
@@ -426,14 +380,12 @@ function App() {
                     </div>
                     <div className="mx-auto my-2 w-fit flex flex-col items-center justify-center">
                         <div className="flex">
-                            
                             <button
                                 className={`inline-flex items-center justify-center px-3 py-1 mr-2 my-2 text-sm font-medium leading-5 text-[#F8F4E3] ${isRecording ? 'bg-red-500' : 'bg-secondary/10'} hover:bg-secondary/20 rounded-full`}
                                 onClick={handleRecord}>
                                 <i className="fa-solid fa-microphone-lines pr-1"></i>
                                 Record
                             </button>
-                            
                             <button
                                 className="inline-flex items-center justify-center px-3 py-1 mr-2 my-2 text-sm font-medium leading-5 text-[#F8F4E3] bg-secondary/10 hover:bg-secondary/20 rounded-full"
                                 onClick={handleStop}>
@@ -460,7 +412,6 @@ function App() {
                                 <i className="fa-solid fa-print pr-1"></i>
                                 Summarize Conversation
                             </button>
-                            
                             <button
                                 className="inline-flex items-center justify-center px-3 py-1 mr-2 my-2 text-sm font-medium leading-5 text-[#F8F4E3] bg-secondary/10 hover:bg-secondary/20 rounded-full"
                                 onClick={handleDelete}>
@@ -487,7 +438,6 @@ function App() {
                                         <i className="fa-solid fa-robot"></i>
                                     )}
                                 </div>
-                                {/* {console.log(chat)} */}
                                 <div className="w-[90%]">
                                     <p className={
                                         chat.user === "User" ? "text-secondary" :
@@ -496,14 +446,9 @@ function App() {
                                     </p>
                                 </div>
                             </div>
-                        ))
-                      }
-                      
+                        ))}
                     </div>
-                    
                 </div>
-                
-                
             </div>
         </div>
     );
