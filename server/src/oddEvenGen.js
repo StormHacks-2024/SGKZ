@@ -3,7 +3,7 @@ import path from 'path';
 
 const generateEvenOrOddScript = () => {
   const INT_MIN = Math.ceil(-2147483648);
-  const INT_MAX = Math.ceil(-2000000000);
+  const INT_MAX = Math.ceil(-2147200000);
   const chunkSize = 1000000; // Adjust the chunk size as needed
   let script = 'const evenOrOdd = (req, res) => {\n';
   script += '  const { number } = req.body;\n\n';
@@ -25,7 +25,7 @@ const generateEvenOrOddScript = () => {
         line = '';
     }
   }
-
+  fs.appendFileSync('evenOrOddScript.js', line);
   fs.appendFileSync('evenOrOddScript.js', '};\n');
 
   console.log('evenOrOddScript.js has been generated.');
