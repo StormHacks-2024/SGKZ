@@ -10,6 +10,11 @@ function App() {
     const [chats, setChats] = useState([]);
     const [assistantMessages, setAssistantMessages] = useState([]);
 
+    const [isLastRecordingPlaying, setIsLastRecordingPlaying] = useState(false);
+
+    const [isPlayEverythingPlaying, setIsPlayEverythingPlaying] = useState(false);
+    const [playEverything, setPlayEverything] = useState(null);
+
     useEffect(() => {
         async function setupWebcam() {
             try {
@@ -177,10 +182,26 @@ function App() {
         }
     };
 
+    let lastRecording = useRef(null);
     const handlePlayRecording = () => {
-        if (audioUrl) {
-            const audio = new Audio(audioUrl);
-            audio.play();
+        if (isLastRecordingPlaying) {
+            // Stop the audio if it's playing
+            console.log("Stopping audio")
+            lastRecording.current.pause();
+            setIsLastRecordingPlaying(false);
+        } else {
+            console.log("Playing audio")
+            if (audioUrl) {
+                const audio = new Audio(audioUrl);
+                audio.play();
+                lastRecording.current = audio;
+                setIsLastRecordingPlaying(true);
+
+                // Set the state to false when audio ends
+                audio.onended = () => {
+                    setIsLastRecordingPlaying(false);
+                };
+            }
         }
     };
 
@@ -245,14 +266,14 @@ function App() {
                 credentials: 'include'
             });
             console.log(response)
-    
+
             if (!response.ok) {
                 // Handle responses that are not 2xx
                 throw new Error(`HTTP error! Status: ${response.status}`);
             }
-    
+
             const data = await response.json(); // Parsing the JSON response body
-    
+
             // Check if there's a summary to read
             if (data.summary) {
                 const speech = new SpeechSynthesisUtterance(data.summary);
@@ -266,7 +287,7 @@ function App() {
             console.error('Error summarizing the chat:', error);
         }
     };
-    
+
     const captureImage = () => {
         const canvas = document.createElement("canvas");
         canvas.width = videoRef.current.videoWidth;
