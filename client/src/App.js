@@ -6,6 +6,7 @@ function App() {
   const audioChunksRef = useRef([]);
   const [audioUrl, setAudioUrl] = useState(null);
   const [isDisabled, setIsDisabled] = useState(true);
+  const socketRef = useRef(null);
 
   useEffect(() => {
     async function setupWebcam() {
@@ -18,6 +19,23 @@ function App() {
     }
 
     setupWebcam();
+
+    socketRef.current = new WebSocket('ws://localhost:1234');
+    socketRef.current.onopen = () => {
+      console.log('WebSocket connection established');
+    };
+    socketRef.current.onclose = () => {
+      console.log('WebSocket connection closed');
+    };
+    socketRef.current.onerror = (error) => {
+      console.error('WebSocket error: ', error);
+    };
+
+    return () => {
+      if (socketRef.current) {
+        socketRef.current.close();
+      }
+    };
   }, []);
 
   const handleRecord = async () => {
@@ -33,10 +51,14 @@ function App() {
         console.log(event.data)
         // console.log(audioChunks)
         // setAudioChunks(prev => [...prev, event.data]);
-        audioChunksRef.current.push(event.data);
-        console.log(audioChunksRef.current)
-      };
+        // audioChunksRef.current.push(event.data);
 
+        console.log(audioChunksRef.current)
+
+        if (event.data.size > 0 && socketRef.current.readyState === WebSocket.OPEN) {
+          socketRef.current.send(event.data);
+        }
+      };
 
       mediaRecorderRef.current.onstop = async () => {
         console.log("Recorder stopped")
@@ -108,6 +130,9 @@ function App() {
       mediaRecorderRef.current.stop();
       // recorder.stop()
       console.log('Recording stopped');
+    }
+    if(socketRef.current) {
+      socketRef.current.close();
     }
   };
 
