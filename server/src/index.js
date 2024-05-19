@@ -52,7 +52,12 @@ app.post('/chat', async (req, res) => {
 	try {
 		const base64Audio = audio.replace(/^data:audio\/webm;base64,/, "");
         const audioBuffer = Buffer.from(base64Audio, 'base64');
+		
+		console.log(audioBuffer.length)
         const audioPath = 'audio.webm';
+		if(fs.existsSync(audioPath)) {
+			fs.unlinkSync(audioPath);
+		}
         fs.writeFileSync(audioPath, audioBuffer);
         const audioStream = fs.createReadStream(audioPath);
         const transcription = await open.transcribeAudio(audioStream);
