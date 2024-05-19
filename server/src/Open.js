@@ -13,6 +13,22 @@ class Open {
 
 	}
 
+	async transcribeAudio(audio) {
+		// audio is a base64 string
+		// use OpenAI to transcribe the audio
+
+		const transciption = await this.open.audio.transcriptions.create({
+			file: audio,
+			model: 'whisper-1',
+		}).then(function(response) {
+			return response.text;
+		}).catch(function(error) {
+			return error;
+		});
+
+		return transciption;
+	}
+
 
 	async chat() {
 		return this.open.chat.completions.create({

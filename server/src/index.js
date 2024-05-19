@@ -2,7 +2,8 @@
 import express from 'express';
 import dotenv from 'dotenv';
 import { captureAndAnalyze } from './emotionDetection.js';
-import { Open } from './Open.js';
+import {Open} from './Open.js';
+import fs from 'fs';
 
 
 dotenv.config();
@@ -22,12 +23,24 @@ app.use((req, res, next) => {
 });
 
 app.get('/', async (req, res) => {
-	res.json(await open.chat()); // Gets a default message from the AI
+	// expect to recieve a base 64 audio string
+	// save the audio to a file
+	// transcribe the audio
+
+	// const {image, audio} = req.body;
+	// convert audio to a file
+	// fs.writeFileSync('audio.wav', audio, 'base64');
+	const audio = fs.createReadStream('audio.mp3');
+
+	const transcription = await open.transcribeAudio(audio); // expects a stream
+	res.json({ transcription });
 })
 
 // will recieve an image from the client
 app.post('/advice', async (req, res) => {
-	const { image, audio } = req.body; // base64 image
+	const { image, audio } = req.body; // base64 image, audio is a base64 string
+
+
 	const emotion = await captureAndAnalyze(image);
 	res.json({ emotion });
 })
