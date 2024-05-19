@@ -2,48 +2,61 @@ import { MongoClient, ServerApiVersion } from "mongodb";
 import dotenv from 'dotenv';
 dotenv.config();
 
+
+import { connectToDB } from './db.js';
+
+
 const uri = process.env.MONGO_URI;
 console.log(uri)
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
-const client = new MongoClient(uri, {
-  serverApi: {
-    version: ServerApiVersion.v1,
-    strict: true,
-    deprecationErrors: true,
-  },
-});
+// const client = new MongoClient(uri, {
+//   serverApi: {
+//     version: ServerApiVersion.v1,
+//     strict: true,
+//     deprecationErrors: true,
+//   },
+// });
 
 async function run() {
   try {
-    await client.connect();
-
-    await client.db("admin").command({ ping: 1 });
-    console.log(
-      "Pinged your deployment. You successfully connected to MongoDB!"
-    );
-  } finally {
-    await client.close();
+  await connectToDB();
+  console.log("Connected to MongoDB!")
+  } catch(e) {
+    console.log(e.message)
   }
 }
 
 run().catch(console.dir);
 
-async function getCollection() {
-  await client.connect();
-  return await client.db("admin").collection("chats");
+async function getChatsCollection() {
+  const db = await connectToDB();
+  return db.collection('chats');
 }
 
 async function getChat(uuid) {
-  const collection = await getCollection();
-  const chat = await collection.findOne({ uuid: uuid });
-  if (chat) {
-    return chat;
-  } else {
-    await collection
-      .insertOne({ uuid: uuid, messages: [], audio: [] })
-      .then(() => {
-        return { uuid: uuid, messages: [], audio: [] };
-      });
+  try {
+    const collection = await getChatsCollection();
+    let chat = await collection.findOne({ uuid: uuid });
+    if (chat) {
+      console.log("Chat was found!")
+      console.log(chat)
+      console.log(chat.messages)
+      if(chat.messages == undefined || chat.messages == null) {
+        console.log(
+          "Chat messages were undefined or null, setting to empty array"
+        )
+        chat.messages = [];
+      }
+      return chat;
+    } else {
+      await collection
+        .insertOne({ uuid: uuid, messages: [], audio: [] })
+        .then(() => {
+          return { uuid: uuid, messages: [], audio: [] };
+        });
+    }
+  } catch(e) {
+    console.log(e.message)
   }
 }
 
@@ -61,9 +74,11 @@ async function insertMessage(uuid, role, content) {
 }
 
 async function getChatMessages(uuid) {
-  await getChat(uuid).then((chat) => {
+  return await getChat(uuid).then((chat) => {
+    console.log("Received chat")
+    console.log(chat)
     return (
-      chat?.messages ?? insertChat({ uuid: uuid, messages: [], audio:[] }).then(() => [])
+      chat?.messages || (chat.messages = [])
     );
   });
 }
@@ -74,7 +89,10 @@ async function insertAudio(uuid, audio) {
 }
 
 async function insertChat(uuid, userMessage, assistantMessage, audio) {
-  const collection = await getCollection();
+  console.log("Inserting chat:")
+  console.log(userMessage)
+  console.log(assistantMessage)
+  const collection = await getChatsCollection();
   const chatDocument = {
       uuid: uuid,
       messages: [
@@ -85,8 +103,6 @@ async function insertChat(uuid, userMessage, assistantMessage, audio) {
   };
   await collection.insertOne(chatDocument).catch(console.dir);
 }
-
-
 
 
 export { insertChat, insertMessage, getChatMessages, insertAudio };

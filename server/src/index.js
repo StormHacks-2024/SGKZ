@@ -25,17 +25,18 @@ app.use((req, res, next) => {
 });
 
 app.get('/', async (req, res) => {
-	const uuid = getUUIDFromCookie(req);
+	res.json({ message: 'Server is running' });
+	// const uuid = getUUIDFromCookie(req);
 	// expect to recieve a base 64 audio string
 	// save the audio to a file
 	// transcribe the audio
 
-	const {image, audio} = req.body;
-	fs.writeFileSync('audio.webm', audio, 'base64');
-	const audioStream = fs.createReadStream('audio.webm');
+	// const {image, audio} = req.body;
+	// fs.writeFileSync('audio.webm', audio, 'base64');
+	// const audioStream = fs.createReadStream('audio.webm');
 
-	const transcription = await open.transcribeAudio(audioStream); // expects a stream
-	res.json({ transcription });
+	// const transcription = await open.transcribeAudio(audioStream); // expects a stream
+	// res.json({ transcription });
 })
 
 app.listen(PORT, () => {
@@ -64,7 +65,7 @@ app.post('/chat', async (req, res) => {
 
 
 		const content = `${transcription} \n ${emotion}`;
-		const response = await open.chat(1, content, audioStream);		
+		const response = await open.chat(42, content, audioStream);		
 		res.json({ response });
 	} catch (error) {
 		res.status(500).json({ error: error.message });
