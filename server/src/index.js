@@ -54,17 +54,9 @@ app.post('/chat', async (req, res) => {
 
 		console.log(audio);
 		const base64Audio = audio.replace(/^data:audio\/webm;base64,/, "");
-    
-		// Decode the Base64 audio data
 		const audioBuffer = Buffer.from(base64Audio, 'base64');
-		const audioPath = 'audio.webm';
-		
-		// Write the decoded audio data to a file
-		fs.writeFileSync(audioPath, audioBuffer);
-		
-		const audioStream = fs.createReadStream('audio.webm');
 
-		const transcription = await open.transcribeAudio(audioStream);
+		const transcription = await transcribeAudio(audioBuffer);
 
 		const emotion = await captureAndAnalyze(image);
 
