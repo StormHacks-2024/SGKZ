@@ -41,6 +41,7 @@ class Open {
 		
 		console.log("userContent", userContent)
 		const messages = await getChatMessages(uuid);
+		console.log('chat id: ' + uuid)
 		console.log("messages", messages)
 		const history = [this.systemMessage, ...messages, { role: 'user', content: userContent }];
 		
@@ -56,9 +57,42 @@ class Open {
 	}
 
 	async queryMessages(uuid) {
-		
-		const messages = await getChatMessages(uuid);
-		return messages
+		try {
+			const messages = await getChatMessages(uuid);
+			
+			if (!messages || messages.length === 0) {
+				console.error('No messages found for this UUID:', uuid);
+				return null;
+			}
+	
+			// Filter and structure messages for the prompt
+			const conversation = messages
+			
+			if (!conversation) {
+				console.error('No conversation to summarize');
+				return null;
+			}
+			const prompt = `Write an short analysis of your conversation with user previously 3 scentences at most.
+			First, summarize the previous conversation you had with the user where you were a therapist.
+			Secondly, the user content has the following pattern, emotion: content describe user's emotion 
+			Thirdly, if there is more than one conversation analyze user's change of emotion throughout conversation and mention your reflection. `
+
+			conversation.push({role: "assistant", content: prompt});
+			return this.open.chat.completions.create({
+				model: 'gpt-3.5-turbo',
+				messages: conversation
+			}).then(async (response) => {
+				console.log(conversation)
+				const assistantMessage = response.choices[0].message.content;
+				console.log(assistantMessage)
+
+				return assistantMessage;
+			}).catch(error => error);
+
+		} catch (error) {
+			console.error('Failed to fetch messages:', error);
+			return null;
+		}
 	}
 
 	async queryVoiceAndAiMessages(uuid){

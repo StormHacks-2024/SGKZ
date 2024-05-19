@@ -67,17 +67,6 @@ app.post('/chat', async (req, res) => {
 		res.status(500).json({ error: error.message });
 	}
 });
-app.post('/query', async (req, res) => {
-	 const uuid = getUUIDFromCookie(req);
-	// console.log(req.body);
-	// console.log(req);
-	try {
-		const response = await open.queryMessages(uuid);		
-		res.json({ response });
-	} catch (error) {
-		res.status(500).json({ error: error.message });
-	}
-});
 
 app.get('/history'	, async (req, res) => {
 	const uuid = getUUIDFromCookie(req);
@@ -106,6 +95,18 @@ app.post('/queryVoicesAndAI', async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 });
+
+app.post('/summarizeChat', async (req, res) => {
+    const  uuid  = getUUIDFromCookie(req);
+	console.log('summarizeChat', uuid)
+    const summary = await open.queryMessages(uuid);
+    if (summary) {
+        res.json({ summary });
+    } else {
+        res.status(404).json({ message: 'Unable to summarize the chat' });
+    }
+});
+
 
 
 // testing
