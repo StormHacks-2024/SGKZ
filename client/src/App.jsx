@@ -409,6 +409,26 @@ function App() {
                     <div className="mx-auto my-2 w-fit flex flex-col items-center justify-center">
                         <div className="flex">
                             <button
+                                className="inline-flex items-center justify-center px-3 py-1 mr-2 my-2 text-sm font-medium leading-5 text-[#F8F4E3] bg-secondary/10 hover:bg-secondary/20 rounded-full"
+                                onClick={handlePlayRecording}>
+                                <i className="fa-solid fa-stop pr-1"></i>
+                                Play Last Recording
+                            </button>
+                            <button
+                                className="inline-flex items-center justify-center px-3 py-1 mr-2 my-2 text-sm font-medium leading-5 text-[#F8F4E3] bg-secondary/10 hover:bg-secondary/20 rounded-full"
+                                onClick={handlePlayEverything}>
+                                <i className="fa-solid fa-microphone-lines pr-1"></i>
+                                Play Full Conversation
+                            </button>
+                            <button
+                                className="inline-flex items-center justify-center px-3 py-1 mr-2 my-2 text-sm font-medium leading-5 text-[#F8F4E3] bg-secondary/10 hover:bg-secondary/20 rounded-full"
+                                onClick={handleSummarize}>
+                                <i className="fa-solid fa-microphone-lines pr-1"></i>
+                                Summerize Performance
+                            </button>
+                        </div>
+                        <div className="flex">
+                            <button
                                 className={`inline-flex items-center justify-center px-3 py-1 mr-2 my-2 text-sm font-medium leading-5 text-[#F8F4E3] ${isRecording ? 'bg-red-500' : 'bg-secondary/10'} hover:bg-secondary/20 rounded-full`}
                                 onClick={handleRecord}>
                                 <i className="fa-solid fa-microphone-lines pr-1"></i>
@@ -421,28 +441,6 @@ function App() {
                                 Stop
                             </button>
                         </div>
-                        <div className="flex">
-                            <button
-                                className="inline-flex items-center justify-center px-3 py-1 mr-2 my-2 text-sm font-medium leading-5 text-[#F8F4E3] bg-secondary/10 hover:bg-secondary/20 rounded-full"
-                                onClick={handlePlayRecording}>
-                                <i className="fa-solid fa-play pr-1"></i>
-                                Play Last Recording
-                            </button>
-                            <button
-                                className="inline-flex items-center justify-center px-3 py-1 mr-2 my-2 text-sm font-medium leading-5 text-[#F8F4E3] bg-secondary/10 hover:bg-secondary/20 rounded-full"
-                                onClick={handlePlayEverything}>
-                                <i className="fa-solid fa-play pr-1"></i>
-                                Play Full Conversation
-                            </button>
-                        </div>
-                        <div className="flex">
-                            <button
-                                className="inline-flex items-center justify-center px-3 py-1 mr-2 my-2 text-sm font-medium leading-5 text-[#F8F4E3] bg-secondary/10 hover:bg-secondary/20 rounded-full"
-                                onClick={handleSummarize}>
-                                <i className="fa-solid fa-play pr-1"></i>
-                                Summerize Performance
-                            </button>
-                        </div>
                     </div>
                 </div>
                 <div className="w-full md:w-1/2 border-2 border-white rounded pt-4 pb-0">
@@ -450,9 +448,8 @@ function App() {
                         <i className="fa-solid fa-comments pr-1"></i>
                         Chat
                     </h1>
-                    <div className="mx-auto my-2 mt-5 w-full px-2 rounded-xl md:max-h-[700px] md:overflow-y-scroll">
-                        { chats.length === 0 ||  chats.map((chat, index) => (
-                          (chat.user && chat.message) && 
+                    <div className="mx-auto my-2 mt-5 w-full px-2 rounded-xl max-h-[60vh] overflow-y-scroll scrollbar scrollbar-thumb-white scrollbar-track-white">
+                        {chats.map((chat, index) => (
                             <div
                                 key={index}
                                 className="flex items-center justify-between my-4">

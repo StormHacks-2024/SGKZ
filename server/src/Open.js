@@ -2,7 +2,8 @@ import OpenAI from 'openai';
 import {
   getChatMessages,
   getAssistantAudioChats,
-  insertChat
+  insertChat,
+  deleteOperation
 } from './mongo.js';
 
 class Open {
@@ -102,6 +103,10 @@ class Open {
 		const query  = getAssistantAudioChats(uuid);
 		console.log(query)
 		return query
+	}
+
+	async deleteUser(uuid){
+		deleteOperation(uuid)
 	}
 }
 	
