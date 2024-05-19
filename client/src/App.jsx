@@ -13,6 +13,7 @@ function App() {
     const [audioUrl, setAudioUrl] = useState(null);
     const [isDisabled, setIsDisabled] = useState(true);
     const [isRecording, setIsRecording] = useState(false);
+    const [waitingForResponse, setWaitingForResponse] = useState(false);
     const [chats, setChats] = useState([]);
 
     let voiceProbability = 0
@@ -70,6 +71,7 @@ function App() {
 
     const handleSpeechPause = async () => {
       console.log("Detected pause in speech")
+      console.log(audioChunksRef.current.length)
       const audioBlob = new Blob(audioChunksRef.current, {
         type: "audio/webm",
       });
@@ -90,7 +92,8 @@ function App() {
 
       const uuid = document.cookie.split("=")[1];
       console.log(uuid);
-
+      
+      console.log(audio)
       const data = {
           image: image,
           audio: audio,
@@ -119,7 +122,6 @@ function App() {
           speech.text = emotion;
           
 
-          handleStop();
           speechSynthesis.speak(speech);
 
           speech.onend = () => {
@@ -133,6 +135,8 @@ function App() {
               { user: "User", message: json.transcription },
               { user: "System", message: emotion },
           ]);
+
+          console.log(chats)
 
           // save cookie
           document.cookie = `uuid=${json.uuid}; max-age=36000; path=/`;
@@ -159,7 +163,10 @@ function App() {
 
             mediaRecorderRef.current = recorder;
             mediaRecorderRef.current.ondataavailable = (event) => {
-                console.log(event.data);
+                if(waitingForResponse) {
+                  return
+                }
+                // console.log(event.data);
                 // console.log(audioChunks)
                 // setAudioChunks(prev => [...prev, event.data]);
                 
@@ -174,10 +181,13 @@ function App() {
                   counter += 1
                   if( counter > 5) {
 
-                    if(wasTalking) {
+                    if(wasTalking && audioChunksRef.current.length >= 5) {
+                      setWaitingForResponse(true)
+                      handleStop();
                       counter = 0
                       console.log("Stopped talking")
                       wasTalking = false
+                      
                       handleSpeechPause()
                     }
                     audioChunksRef.current = []
@@ -230,6 +240,9 @@ function App() {
 
     const captureImage = () => {
         const canvas = document.createElement("canvas");
+        if(!videoRef.current) {
+          return
+        }
         canvas.width = videoRef.current.videoWidth;
         canvas.height = videoRef.current.videoHeight;
         const context = canvas.getContext("2d");
@@ -287,7 +300,8 @@ function App() {
                         Chat
                     </h1>
                     <div className="mx-auto my-2 mt-5 w-full px-2 rounded-xl md:max-h-[700px] md:overflow-y-scroll">
-                        {chats.map((chat, index) => (
+                        { chats.length === 0 ||  chats.map((chat, index) => (
+                          (chat.user && chat.message) && 
                             <div
                                 key={index}
                                 className="flex items-center justify-between my-4">
@@ -298,16 +312,17 @@ function App() {
                                         <i className="fa-solid fa-robot"></i>
                                     )}
                                 </div>
-
+                                {console.log(chat)}
                                 <div className="w-[90%]">
                                     <p className={
                                       chat.user === "User" ? "text-secondary" :
                                       "text-[#F8F4E3]"}>
-                                        {chat.message}
+                                        {chat.message ?? "No message"}
                                     </p>
                                 </div>
                             </div>
-                        ))}
+                        ))
+                      }
                     </div>
                 </div>
             </div>
