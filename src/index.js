@@ -15,18 +15,6 @@ const open = new Open();
 const app = express();
 app.use(cookieParser());
 
-const cors = {
-	origin: ["http://www.aineedhelp.online","http://localhost:3000","https://www.aineedhelp.online"],
-	default: "http://localhost:3000"
-  }
-  
-  app.all('*', function(req, res, next) {
-	const origin = cors.origin.includes(req.header('origin').toLowerCase()) ? req.headers.origin : cors.default;
-	res.header("Access-Control-Allow-Origin", origin);
-	res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
-	next();
-  });
-
 // change POST request max size
 app.use(express.json({ limit: "512mb" }));
 
