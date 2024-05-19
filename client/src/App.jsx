@@ -197,8 +197,8 @@ function App() {
             const { responseData } = result;
             setAssistantMessages(responseData);
 
-   
-    
+
+
             // Function to play the audio and then the speech
             const playAudioAndSpeech = async (item) => {
                 return new Promise(async (resolve, reject) => {
@@ -222,7 +222,7 @@ function App() {
                     audio.play();
                 });
             };
-    
+
             // Sequentially play each audio and speech synthesis
             for (const item of responseData) {
                 await playAudioAndSpeech(item); // Wait for one audio and its speech to complete before the next
@@ -243,6 +243,7 @@ function App() {
 
     return (
         <div className="bg-dark p-7">
+            <h1 className="text-5xl font-bold text-center text-accent mb-8">AI Need Help</h1>
             <div className="mx-auto md:flex">
                 <div className="w-full md:w-1/2 my-auto">
                     <video
@@ -253,45 +254,49 @@ function App() {
                     <div
                         {...(isRecording
                             ? {
-                                  className:
-                                      "mx-auto my-2 w-fit text-red-500 animate-pulse",
-                              }
+                                className:
+                                    "mx-auto my-2 w-fit text-red-500 animate-pulse",
+                            }
                             : { className: "hidden" })}>
                         <i className="fa-solid fa-video pr-1"></i>
                     </div>
-                    <div className="mx-auto my-2 w-fit">
-                        <button
-                            className="inline-flex items-center justify-center px-3 py-1 mr-2 my-2 text-sm font-medium leading-5 text-[#F8F4E3] bg-secondary/10 hover:bg-secondary/20 rounded-full"
-                            onClick={handleRecord}>
-                            <i className="fa-solid fa-microphone-lines pr-1"></i>
-                            Record
-                        </button>
-                        <button
-                            className="inline-flex items-center justify-center px-3 py-1 mr-2 my-2 text-sm font-medium leading-5 text-[#F8F4E3] bg-secondary/10 hover:bg-secondary/20 rounded-full"
-                            onClick={handleStop}>
-                            <i className="fa-solid fa-stop pr-1"></i>
-                            Stop
-                        </button>
-                        <button
-                            className="inline-flex items-center justify-center px-3 py-1 mr-2 my-2 text-sm font-medium leading-5 text-[#F8F4E3] bg-secondary/10 hover:bg-secondary/20 rounded-full"
-                            onClick={handlePlayRecording}>
-                            <i className="fa-solid fa-stop pr-1"></i>
-                            Play Last Recording
-                        </button>
-                        <button
-                            className="inline-flex items-center justify-center px-3 py-1 mr-2 my-2 text-sm font-medium leading-5 text-[#F8F4E3] bg-secondary/10 hover:bg-secondary/20 rounded-full"
-                            onClick={handlePlayEverything}>
-                            <i className="fa-solid fa-microphone-lines pr-1"></i>
-                            Play Full Conversation
-                        </button>
+                    <div className="mx-auto my-2 w-fit flex flex-col items-center justify-center">
+                        <div className="flex">
+                            <button
+                                className="inline-flex items-center justify-center px-3 py-1 mr-2 my-2 text-sm font-medium leading-5 text-[#F8F4E3] bg-secondary/10 hover:bg-secondary/20 rounded-full"
+                                onClick={handlePlayRecording}>
+                                <i className="fa-solid fa-stop pr-1"></i>
+                                Play Last Recording
+                            </button>
+                            <button
+                                className="inline-flex items-center justify-center px-3 py-1 mr-2 my-2 text-sm font-medium leading-5 text-[#F8F4E3] bg-secondary/10 hover:bg-secondary/20 rounded-full"
+                                onClick={handlePlayEverything}>
+                                <i className="fa-solid fa-microphone-lines pr-1"></i>
+                                Play Full Conversation
+                            </button>
+                        </div>
+                        <div className="flex">
+                            <button
+                                className="inline-flex items-center justify-center px-3 py-1 mr-2 my-2 text-sm font-medium leading-5 text-[#F8F4E3] bg-secondary/10 hover:bg-secondary/20 rounded-full"
+                                onClick={handleRecord}>
+                                <i className="fa-solid fa-microphone-lines pr-1"></i>
+                                Record
+                            </button>
+                            <button
+                                className="inline-flex items-center justify-center px-3 py-1 mr-2 my-2 text-sm font-medium leading-5 text-[#F8F4E3] bg-secondary/10 hover:bg-secondary/20 rounded-full"
+                                onClick={handleStop}>
+                                <i className="fa-solid fa-stop pr-1"></i>
+                                Stop
+                            </button>
+                        </div>
                     </div>
                 </div>
-                <div className="w-full md:w-1/2">
+                <div className="w-full md:w-1/2 border-2 border-white rounded pt-4 pb-0">
                     <h1 className="mx-auto text-5xl text-accent text-center">
                         <i className="fa-solid fa-comments pr-1"></i>
                         Chat
                     </h1>
-                    <div className="mx-auto my-2 mt-5 w-full px-2 rounded-xl md:max-h-[700px] md:overflow-y-scroll">
+                    <div className="mx-auto my-2 mt-5 w-full px-2 rounded-xl max-h-[60vh] overflow-y-scroll scrollbar scrollbar-thumb-white scrollbar-track-white">
                         {chats.map((chat, index) => (
                             <div
                                 key={index}
@@ -306,8 +311,8 @@ function App() {
 
                                 <div className="w-[90%]">
                                     <p className={
-                                      chat.user === "User" ? "text-secondary" :
-                                      "text-[#F8F4E3]"}>
+                                        chat.user === "User" ? "text-secondary" :
+                                            "text-[#F8F4E3]"}>
                                         {chat.message || chat.content}
                                     </p>
                                 </div>
