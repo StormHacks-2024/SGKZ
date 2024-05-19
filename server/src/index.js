@@ -43,13 +43,11 @@ app.listen(PORT, () => {
 	console.log(`http://localhost:${PORT}`);
 })
 
-
-
-
 app.post('/chat', async (req, res) => {
 	const { image, audio } = req.body; // Get content from request body
 	try {
 
+		console.log(audio)
 		// fs.writeFileSync('audio.wav', audio, 'base64');
 		const audioStream = fs.createReadStream('audio.mp3');
 		const transcription = await open.transcribeAudio(audioStream);
