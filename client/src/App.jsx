@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
+import jsPDF from 'jspdf';
 
 function App() {
     const videoRef = useRef(null);
@@ -115,8 +116,6 @@ function App() {
                 });
                 console.log("audioBlob:", audioBlob);
 
-                const uuid = document.cookie.split("=")[1];
-                console.log(uuid);
 
                 const data = {
                     image: image,
@@ -275,11 +274,23 @@ function App() {
             const data = await response.json(); // Parsing the JSON response body
 
             // Check if there's a summary to read
-            if (data.summary) {
-                const speech = new SpeechSynthesisUtterance(data.summary);
+            if (data.speech) {
+                const speech = new SpeechSynthesisUtterance(data.speech);
                 speech.onend = () => console.log("Finished reading the summary.");
                 speech.onerror = (event) => console.error('Speech synthesis failed:', event.error);
                 speechSynthesis.speak(speech);
+                const doc = new jsPDF();
+                // Define the maximum width for text
+                const pageWidth = doc.internal.pageSize.getWidth() - 20; // 20mm margin on each side
+    
+                // Use the splitTextToSize method to split the text into lines
+                const lines = doc.splitTextToSize(data.text, pageWidth);
+    
+                // Add formatted text to the document
+                doc.text(lines, 10, 10); // Start writing from x=10mm, y=10mm
+    
+                // Save the PDF
+                doc.save('chat-summary.pdf');
             } else {
                 console.log('No summary provided.');
             }
@@ -287,7 +298,24 @@ function App() {
             console.error('Error summarizing the chat:', error);
         }
     };
-
+    const handleDelete = async () =>{
+        try {
+            const response = await fetch('http://localhost:5000/delete', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                credentials: 'include'
+            });
+            console.log(response)
+            setChats([])
+            // history= []
+            window.location.reload()
+        } catch (error) {
+            console.error('Error deleting the chat:', error);
+        }
+    }
+    
     const captureImage = () => {
         const canvas = document.createElement("canvas");
         canvas.width = videoRef.current.videoWidth;
@@ -330,6 +358,12 @@ function App() {
                                 <i className="fa-solid fa-stop pr-1"></i>
                                 Stop
                             </button>
+                            <button
+                                className="inline-flex items-center justify-center px-3 py-1 mr-2 my-2 text-sm font-medium leading-5 text-[#F8F4E3] bg-secondary/10 hover:bg-secondary/20 rounded-full"
+                                onClick={handleDelete}>
+                                <i className="fa-solid fa-trash pr-1"></i>
+                                Clear History
+                            </button>
                         </div>
                         <div className="flex">
                             <button
@@ -349,7 +383,7 @@ function App() {
                             <button
                                 className="inline-flex items-center justify-center px-3 py-1 mr-2 my-2 text-sm font-medium leading-5 text-[#F8F4E3] bg-secondary/10 hover:bg-secondary/20 rounded-full"
                                 onClick={handleSummarize}>
-                                <i className="fa-solid fa-play pr-1"></i>
+                                <i className="fa-solid fa-print pr-1"></i>
                                 Summerize Performance
                             </button>
                         </div>
