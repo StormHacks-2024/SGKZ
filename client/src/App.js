@@ -6,6 +6,7 @@ function App() {
   const audioChunksRef = useRef([]);
   const [audioUrl, setAudioUrl] = useState(null);
   const [isDisabled, setIsDisabled] = useState(true);
+  const [assistantMessages, setAssistantMessages] = useState([]);
 
   useEffect(() => {
     async function setupWebcam() {
@@ -112,6 +113,46 @@ function App() {
     }
   };
 
+  const handlePlayEverything = async () => {
+    try {
+        const response = await fetch('http://localhost:5000/queryVoicesAndAI', {
+            method: 'POST',
+        });
+        const result = await response.json();
+        const { responseData } = result;
+        setAssistantMessages(responseData);
+
+        // Function to play the audio and then the speech
+        const playAudioAndSpeech = async (item) => {
+            return new Promise(async (resolve, reject) => {
+                // Create and play the audio element
+                const audio = new Audio(`data:audio/wav;base64,${item.audioBuffer}`);
+                audio.onended = async () => {
+                    // Once audio ends, check if there are messages
+                    if (item.messages.length > 0) {
+                        const speech = new SpeechSynthesisUtterance(item.messages.join(' '));
+                        speech.onend = () => resolve(); // Resolve the promise when speech ends
+                        speech.onerror = () => reject('Speech synthesis failed'); // Reject on speech error
+                        speechSynthesis.speak(speech);
+                    } else {
+                        resolve(); // Resolve the promise immediately if no messages
+                    }
+                };
+                audio.onerror = () => reject('Audio playback failed'); // Reject on audio error
+                audio.play();
+            });
+        };
+
+        // Sequentially play each audio and speech synthesis
+        for (const item of responseData) {
+            await playAudioAndSpeech(item); // Wait for one audio and its speech to complete before the next
+        }
+    } catch (error) {
+        console.error('Error fetching assistant messages: ', error);
+    }
+};
+
+
   const captureImage = () => {
     const canvas = document.createElement('canvas');
     canvas.width = videoRef.current.videoWidth;
@@ -127,6 +168,8 @@ function App() {
       <div>
         <button onClick={handleRecord}>Record</button>
         <button onClick={handleStop}>Stop</button>
+        <button onClick={handlePlayEverything}>Play complete conversation</button>
+
         <button onClick={handlePlayRecording} disabled={isDisabled}>Play Recording</button>
       </div>
     </div>

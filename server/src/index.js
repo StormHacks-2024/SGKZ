@@ -61,30 +61,7 @@ app.post('/chat', async (req, res) => {
         const transcription = await open.transcribeAudio(audioStream);
 		const emotion = await captureAndAnalyze(image);
 		const content = `${emotion}: ${transcription}`;
-		const response = await open.chat(190, content, audioStream);		
-		res.json({ response });
-	} catch (error) {
-		res.status(500).json({ error: error.message });
-	}
-});
-
-app.post('/chat', async (req, res) => {
-	// const uuid = getUUIDFromCookie(req);
-	// console.log(req.body);
-	// console.log(req);
-	const { image, audio } = req.body; // Get content from request body
-	try {
-
-		// console.log(audio);
-		const base64Audio = audio.replace(/^data:audio\/webm;base64,/, "");
-        const audioBuffer = Buffer.from(base64Audio, 'base64');
-        const audioPath = 'audio.webm';
-        fs.writeFileSync(audioPath, audioBuffer);
-        const audioStream = fs.createReadStream(audioPath);
-        const transcription = await open.transcribeAudio(audioStream);
-		const emotion = await captureAndAnalyze(image);
-		const content = `${emotion}: ${transcription}`;
-		const response = await open.chat(190, content, audioStream);		
+		const response = await open.chat(100, content, audioStream, audioBuffer);		
 		res.json({ response });
 	} catch (error) {
 		res.status(500).json({ error: error.message });
@@ -96,14 +73,29 @@ app.post('/query', async (req, res) => {
 	// console.log(req.body);
 	// console.log(req);
 	try {
-		const response = await open.query(190);		
+		const response = await open.queryMessages(100);		
 		res.json({ response });
 	} catch (error) {
 		res.status(500).json({ error: error.message });
 	}
 });
 
-setInterval(() => {
-	captureAndAnalyze();
-}, 5000);
+app.post('/queryVoicesAndAI', async (req, res) => {
+    try {
+        const chats = await open.queryVoiceAndAiMessages(100); // Assuming this function returns the needed data
+        console.log("hello")
+		const responseData = chats.map(chat => {
+			
+            return {
+                audioBuffer: chat.audio[0],
+                messages: chat.messages.filter(msg => msg.role === 'assistant').map(msg => msg.content)
+            };
+        });
+        res.json({ responseData });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+
 // testing
