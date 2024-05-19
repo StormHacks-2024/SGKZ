@@ -6,6 +6,7 @@ function App() {
     const audioChunksRef = useRef([]);
     const [audioUrl, setAudioUrl] = useState(null);
     const [isDisabled, setIsDisabled] = useState(true);
+    const [isRecording, setIsRecording] = useState(false);
     const [chats, setChats] = useState([]);
 
     useEffect(() => {
@@ -15,7 +16,6 @@ function App() {
                     video: true,
                 });
                 videoRef.current.srcObject = stream;
-
             } catch (error) {
                 console.error("Error accessing webcam: ", error);
             }
@@ -116,6 +116,7 @@ function App() {
 
             mediaRecorderRef.current.start(500);
             // Store the recorder in the ref
+            setIsRecording(true);
             console.log("Recording started");
         } catch (error) {
             console.error("Error accessing microphone: ", error);
@@ -126,6 +127,7 @@ function App() {
         if (mediaRecorderRef.current) {
             mediaRecorderRef.current.stop();
             // recorder.stop()
+            setIsRecording(false);
             console.log("Recording stopped");
         }
     };
@@ -147,16 +149,23 @@ function App() {
     };
 
     return (
-        <div className="bg-dark p-4">
-            <div className="mx-auto flex">
-                <div className="w-1/2">
+        <div className="bg-dark p-7">
+            <div className="mx-auto md:flex">
+                <div className="w-full md:w-1/2">
                     <video
-                        className="mx-auto w-[640px] h-[480px] rounded-lg border-black border-2"
+                        className="mx-auto w-3/4 aspect-4/3 rounded-lg border-black border-2"
                         ref={videoRef}
                         id="video"
-                        width="640"
-                        height="480"
                         autoPlay></video>
+                    <div
+                        {...(isRecording
+                            ? {
+                                  className:
+                                      "mx-auto my-2 w-fit text-red-500 animate-pulse",
+                              }
+                            : { className: "hidden" })}>
+                        <i className="fa-solid fa-video pr-1"></i>
+                    </div>
                     <div className="mx-auto my-2 w-fit">
                         <button
                             className="inline-flex items-center justify-center px-3 py-1 mr-2 my-2 text-sm font-medium leading-5 text-[#F8F4E3] bg-secondary/10 hover:bg-secondary/20 rounded-full"
@@ -179,24 +188,26 @@ function App() {
                             onClick={handlePlayRecording}
                             disabled={isDisabled}>
                             <i className="fa-solid fa-play pr-1"></i>
-                            Play Recording
+                            Play Last Recording
                         </button>
                     </div>
                 </div>
-                <div className="w-1/2">
+                <div className="w-full md:w-1/2">
                     <h1 className="mx-auto text-4xl text-accent text-center">
-                    <i className="fa-solid fa-comments pr-1"></i>
+                        <i className="fa-solid fa-comments pr-1"></i>
                         Chat
                     </h1>
-                    <div className="mx-auto my-2 w-full">
+                    <div className="mx-auto my-2 w-full px-2 md:max-h-[700px] md:overflow-y-scroll">
                         {chats.map((chat, index) => (
-                            <div key={index} className="flex items-center justify-between my-2">
+                            <div
+                                key={index}
+                                className="flex items-center justify-between my-4">
                                 <div className="text-[#F8F4E3] text-3xl w-[5%]">
-                                  {(chat.user === "User") ?
-                                    <i className="fa-solid fa-user"></i>
-                                  :
-                                    <i className="fa-solid fa-robot"></i>
-                                  }
+                                    {chat.user === "User" ? (
+                                        <i className="fa-solid fa-user"></i>
+                                    ) : (
+                                        <i className="fa-solid fa-robot"></i>
+                                    )}
                                 </div>
 
                                 <div className="w-[90%]">
