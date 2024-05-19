@@ -36,29 +36,29 @@ async function getChatsCollection() {
 async function getChat(uuid) {
   try {
     const collection = await getChatsCollection();
-    let chat = await collection.findOne({ uuid: uuid });
-    if (chat) {
-      console.log("Chat was found!")
-      console.log(chat)
-      console.log(chat.messages)
-      if(chat.messages == undefined || chat.messages == null) {
-        console.log(
-          "Chat messages were undefined or null, setting to empty array"
-        )
-        chat.messages = [];
-      }
-      return chat;
+    let chats = await collection.find({ uuid: uuid }).toArray(); // Using find to get all matches
+    if (chats && chats.length > 0) {
+      console.log("Chats were found!")
+      let allMessages = [];
+      chats.forEach(chat => {
+        if (chat.messages) {
+          allMessages = allMessages.concat(chat.messages);
+        }
+      });
+      console.log(allMessages)
+      return { uuid: uuid, messages: allMessages, audio: [] }; // Assuming audio merging is not required
     } else {
-      await collection
-        .insertOne({ uuid: uuid, messages: [], audio: [] })
-        .then(() => {
-          return { uuid: uuid, messages: [], audio: [] };
-        });
+      console.log("No chat found, creating a new one");
+      let newChat = { uuid: uuid, messages: [], audio: [] };
+      await collection.insertOne(newChat);
+      return newChat;
     }
   } catch(e) {
-    console.log(e.message)
+    console.log(e.message);
+    return null; // Ensure to handle errors gracefully
   }
 }
+
 
 // async function insertChat(chat) {
 //   const collection = await getCollection();
@@ -75,8 +75,7 @@ async function insertMessage(uuid, role, content) {
 
 async function getChatMessages(uuid) {
   return await getChat(uuid).then((chat) => {
-    console.log("Received chat")
-    console.log(chat)
+    // console.log(chat)
     return (
       chat?.messages || (chat.messages = [])
     );

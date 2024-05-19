@@ -38,19 +38,19 @@ class Open {
 
 
 	async chat(uuid, userContent, audio) {
+		
 		console.log("userContent", userContent)
 		const messages = await getChatMessages(uuid);
 		console.log("messages", messages)
 		const history = [this.systemMessage, ...messages, { role: 'user', content: userContent }];
 		
-		console.log("history", history)
+		console.log("historyxxxxxxxxxxxxx", history.length)
 		return this.open.chat.completions.create({
 		  model: 'gpt-3.5-turbo',
 		  messages: history
 		}).then(async (response) => {
 		  const assistantMessage = response.choices[0].message.content;
-		//   insertChat(uuid, userMessage, assistantMessage, audio)
-		//   await insertChat(uuid, userContent, assistantMessage,  audio);
+		  await insertChat(uuid, userContent, assistantMessage,  audio);
 		  return assistantMessage;
 		}).catch(error => error);
 	  }

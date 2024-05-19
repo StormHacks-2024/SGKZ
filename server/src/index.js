@@ -25,18 +25,17 @@ app.use((req, res, next) => {
 });
 
 app.get('/', async (req, res) => {
-	res.json({ message: 'Server is running' });
-	// const uuid = getUUIDFromCookie(req);
+	const uuid = getUUIDFromCookie(req);
 	// expect to recieve a base 64 audio string
 	// save the audio to a file
 	// transcribe the audio
 
-	// const {image, audio} = req.body;
-	// fs.writeFileSync('audio.webm', audio, 'base64');
-	// const audioStream = fs.createReadStream('audio.webm');
+	const {image, audio} = req.body;
+	fs.writeFileSync('audio.webm', audio, 'base64');
+	const audioStream = fs.createReadStream('audio.webm');
 
-	// const transcription = await open.transcribeAudio(audioStream); // expects a stream
-	// res.json({ transcription });
+	const transcription = await open.transcribeAudio(audioStream); // expects a stream
+	res.json({ transcription });
 })
 
 app.listen(PORT, () => {
@@ -63,16 +62,15 @@ app.post('/chat', async (req, res) => {
 
 		const emotion = await captureAndAnalyze(image);
 
+		console.log(emotion)
 
-		const content = `${transcription} \n ${emotion}`;
-		const response = await open.chat(42, content, audioStream);		
+		const content = `${emotion}: ${transcription}`;
+		const response = await open.chat(190, content, audioStream);		
 		res.json({ response });
 	} catch (error) {
 		res.status(500).json({ error: error.message });
 	}
-	// res.cookie('uuid', uuid);
 });
-//
 
 setInterval(() => {
 	captureAndAnalyze();
