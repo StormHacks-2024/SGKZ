@@ -6,6 +6,7 @@ import { Open } from './Open.js';
 import fs from 'fs';
 import { getUUIDFromCookie } from './utils.js';
 import cors from 'cors';
+import cookieParser from 'cookie-parser';
 
 
 dotenv.config();
@@ -13,6 +14,7 @@ const PORT = process.env.PORT || 5000;
 const open = new Open();
 
 const app = express();
+app.use(cookieParser());
 
 // change POST request max size
 app.use(express.json({ limit: '512mb' }));
