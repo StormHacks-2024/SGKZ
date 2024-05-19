@@ -5,6 +5,7 @@ import { captureAndAnalyze } from './emotionDetection.js';
 import { Open } from './Open.js';
 import fs from 'fs';
 import { getUUIDFromCookie } from './utils.js';
+import cors from 'cors';
 
 
 dotenv.config();
@@ -23,6 +24,11 @@ app.use((req, res, next) => {
 	res.header('Access-Control-Allow-Headers', 'Content-Type');
 	next();
 });
+
+app.use(cors({
+	origin: '*',
+	credentials: true
+}));
 
 app.get('/', async (req, res) => {
 	const uuid = getUUIDFromCookie(req);
@@ -47,9 +53,9 @@ app.listen(PORT, () => {
 
 app.post('/chat', async (req, res) => {
 	const uuid = getUUIDFromCookie(req);
+	console.log(req.cookies);
 	const { image, audio } = req.body; // Get content from request body
 	try {
-
 		const base64Audio = audio.replace(/^data:audio\/webm;base64,/, "");
 		const audioBuffer = Buffer.from(base64Audio, 'base64');
 		const audioPath = 'audio.webm';
@@ -60,14 +66,13 @@ app.post('/chat', async (req, res) => {
 
 		const emotion = await captureAndAnalyze(image);
 
-
 		const content = `${transcription} \n ${emotion}`;
 		const response = await open.chat(content);
-		res.json({ response });
+		res.cookie('uuid', uuid);
+		res.json({ response, uuid });
 	} catch (error) {
 		res.status(500).json({ error: error.message });
 	}
-	res.cookie('uuid', uuid);
 });
 //
 
