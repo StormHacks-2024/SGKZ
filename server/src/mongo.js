@@ -1,7 +1,9 @@
-const { MongoClient, ServerApiVersion } = require("mongodb");
+import { MongoClient, ServerApiVersion } from "mongodb";
+import dotenv from 'dotenv';
+dotenv.config();
 
 const uri = process.env.MONGO_URI;
-
+console.log(uri)
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
 const client = new MongoClient(uri, {
   serverApi: {
@@ -45,10 +47,10 @@ async function getChat(uuid) {
   }
 }
 
-async function insertChat(chat) {
-  const collection = await getCollection();
-  await collection.insertOne(chat).catch(console.dir);
-}
+// async function insertChat(chat) {
+//   const collection = await getCollection();
+//   await collection.insertOne(chat).catch(console.dir);
+// }
 
 async function insertMessage(uuid, role, content) {
   const collection = await getCollection();
@@ -61,7 +63,7 @@ async function insertMessage(uuid, role, content) {
 async function getChatMessages(uuid) {
   await getChat(uuid).then((chat) => {
     return (
-      chat?.messages ?? insertChat({ uuid: uuid, messages: [] }).then(() => [])
+      chat?.messages ?? insertChat({ uuid: uuid, messages: [], audio:[] }).then(() => [])
     );
   });
 }
@@ -71,10 +73,20 @@ async function insertAudio(uuid, audio) {
   await collection.updateOne({ uuid: uuid }, { $push: { audio: audio } });
 }
 
-async function getAudio(uuid) {
-  await getChat(uuid).then((chat) => {
-    return chat.audio;
-  });
+async function insertChat(uuid, userMessage, assistantMessage, audio) {
+  const collection = await getCollection();
+  const chatDocument = {
+      uuid: uuid,
+      messages: [
+          { role: 'user', content: userMessage },
+          { role: 'assistant', content: assistantMessage }
+      ],
+      audio: [audio]
+  };
+  await collection.insertOne(chatDocument).catch(console.dir);
 }
 
-export { insertChat, insertMessage, getChatMessages, insertAudio, getAudio };
+
+
+
+export { insertChat, insertMessage, getChatMessages, insertAudio };

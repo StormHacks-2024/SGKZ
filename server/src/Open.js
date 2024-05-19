@@ -1,18 +1,23 @@
 import OpenAI from 'openai';
+import {
+  getChatMessages,
+
+  insertChat
+} from './mongo.js';
 
 class Open {
-	
-	constructor() {
-		this.chat = this.chat.bind(this);
-		this.open = new OpenAI({
-			apiKey: process.env.OPENAI_API_KEY,
-			chatCompletion: true,
-			logLevel: 'info'
-		});
-		this.history = [
-			{ role: 'system', content: 'You are a compassionate and empathetic therapist. Respond to the user\'s emotions and provide support. The user input will have the following structure: emotion: prompt. Make it obvious that you understand the user\'s emotions.' }
-		];
 
+	constructor() {
+	  this.chat = this.chat.bind(this);
+	  this.open = new OpenAI({
+		apiKey: process.env.OPENAI_API_KEY,
+		chatCompletion: true,
+		logLevel: 'info'
+	  });
+	  this.systemMessage = {
+		role: 'system',
+		content: 'You are a compassionate and empathetic therapist. Respond to the user\'s emotions and provide support. The user input will have the following structure: emotion: prompt. Make it obvious that you understand the user\'s emotions.'
+	  };
 	}
 
 	async transcribeAudio(audio) {
@@ -32,25 +37,22 @@ class Open {
 	}
 
 
-	async chat(userContent) {
-		// Add user message to history
-		this.history.push({ role: 'user', content: userContent });
-
-		    // Call OpenAI API
+	async chat(uuid, userContent, audio) {
+		const messages = await getChatMessages(uuid);
+		const history = [this.systemMessage, ...messages, { role: 'user', content: userContent }];
+	
 		return this.open.chat.completions.create({
-			model: 'gpt-3.5-turbo',
-			messages: this.history
-			}).then((response) => {
-			const assistantMessage = response.choices[0].message.content;
-		
-			// Add assistant message to history
-			this.history.push({ role: 'assistant', content: assistantMessage });
-		
-			return assistantMessage;
-			}).catch((error) => {
-			return error;
-		}); //
+		  model: 'gpt-3.5-turbo',
+		  messages: history
+		}).then(async (response) => {
+		  const assistantMessage = response.choices[0].message.content;
+		//   insertChat(uuid, userMessage, assistantMessage, audio)
+		  await insertChat(uuid, userContent, assistantMessage,  audio);
+		  return assistantMessage;
+		}).catch(error => error);
 	  }
 }
+	
+
 
 export { Open };
