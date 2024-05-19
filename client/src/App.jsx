@@ -1,7 +1,8 @@
 import React, { useEffect, useRef, useState } from "react";
 
 function App() {
-    const URI = "http://localhost:5000";
+    // const URI = "http://localhost:5000";
+    const URI = "https://aineedhelp-b3c048c4ccea.herokuapp.com";
     const videoRef = useRef(null);
     const mediaRecorderRef = useRef(null); // Ref for MediaRecorder
     const audioChunksRef = useRef([]);
