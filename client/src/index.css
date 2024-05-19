@@ -1,3 +1,17 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+.scrollbar::-webkit-scrollbar {
+    width: 12px;               /* width of the entire scrollbar */
+}
+
+.scrollbar::-webkit-scrollbar-track {
+    background: transparent;   /* color of the tracking area */
+}
+
+.scrollbar::-webkit-scrollbar-thumb {
+    background-color: white;   /* color of the scroll thumb */
+    border-radius: 20px;       /* roundness of the scroll thumb */
+    border: 3px solid transparent; /* creates padding around scroll thumb */
+}
