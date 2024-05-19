@@ -9,6 +9,14 @@ import cors from 'cors';
 import cookieParser from 'cookie-parser';
 
 
+const { default:VAD } = await import('node-vad');
+
+import { WebSocketServer } from 'ws';
+
+
+const vad = new VAD(VAD.Mode.NORMAL);
+
+
 dotenv.config();
 const PORT = process.env.PORT || 5000;
 const open = new Open();
@@ -28,17 +36,7 @@ app.use(cors({
   }));
 
 app.get('/', async (req, res) => {
-	const uuid = getUUIDFromCookie(req);
-	// expect to recieve a base 64 audio string
-	// save the audio to a file
-	// transcribe the audio
-
-	const {image, audio} = req.body;
-	fs.writeFileSync('audio.webm', audio, 'base64');
-	const audioStream = fs.createReadStream('audio.webm');
-
-	const transcription = await open.transcribeAudio(audioStream); // expects a stream
-	res.json({ transcription });
+	res.send('Hello World');
 })
 
 app.listen(PORT, () => {
@@ -73,7 +71,44 @@ app.post('/chat', async (req, res) => {
 });
 //
 
-setInterval(() => {
-	captureAndAnalyze();
-}, 5000);
+const wss = new WebSocketServer({ port: 1234 });
+
+const CHUNK_SIZE = 8736;  // Define a manageable chunk size
+let bufferState = Buffer.alloc(0);wss.on('connection', (ws) => {
+	ws.on('message', (message) => {
+	  if (Buffer.isBuffer(message)) {
+		// Combine the new message with any remaining data from the previous chunk
+		bufferState = Buffer.concat([bufferState, message]);
+  
+		while (bufferState.length >= CHUNK_SIZE) {
+		  const chunk = bufferState.slice(0, CHUNK_SIZE);
+		  bufferState = bufferState.slice(CHUNK_SIZE);
+  
+		  try {
+			const floatBuffer = vad.toFloatBuffer(chunk);
+			vad.processAudio(floatBuffer, 16000)
+			  .then((res) => {
+				console.log('VAD result:', res);
+			  })
+			  .catch((err) => {
+				console.error('Error processing audio:', err);
+			  });
+		  } catch (err) {
+			console.error('Error in VAD processing:', err);
+		  }
+		}
+	  } else {
+		console.error('Received message is not a buffer');
+	  }
+	});
+  });
+wss.on('close', () => {
+	console.log('Client disconnected');
+});
+
+console.log('WebSocket server running on ws://localhost:1234');
+
+// setInterval(() => {
+// 	captureAndAnalyze();
+// }, 5000);
 // testing
