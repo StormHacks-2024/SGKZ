@@ -91,12 +91,12 @@
         body: JSON.stringify(data)
       };
 
-      const response = await fetch('http://localhost:5000/advice', options);
+      const response = await fetch('http://localhost:5000/chat', options);
       const json = await response.json();
       console.log(json);
 
     const speech = new SpeechSynthesisUtterance()
-    const emotion = json.emotion
+    const emotion = json.response
     speech.text = `You are a ${emotion} person`
 
     speechSynthesis.speak(speech)

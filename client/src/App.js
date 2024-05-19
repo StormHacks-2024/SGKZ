@@ -62,7 +62,7 @@ function App() {
           body: JSON.stringify(data)
         };
 
-        const response = await fetch('http://localhost:5000/advice', options);
+        const response = await fetch('http://localhost:5000/chat', options);
         const json = await response.json();
         console.log(json);
       };
