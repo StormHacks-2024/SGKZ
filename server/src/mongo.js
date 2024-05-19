@@ -82,6 +82,23 @@ async function getAssistantAudioChats(userId) {
   }
 }
 
+async function deleteOperation(userId) {
+  try {
+    const collection = await getChatsCollection(); // Ensures you are connected to your MongoDB database
+    const query = { "uuid": userId }; // Filters by the 'uuid' which is assumed to be your user identifier field
+
+    const result = await collection.deleteMany(query); // Executes deletion of all documents that match the query
+    if (result.deletedCount === 0) {
+      console.log("No chats found for user ID:", userId);
+    } else {
+      console.log("Successfully deleted", result.deletedCount, "chats for user ID:", userId);
+    }
+  } catch (e) {
+    console.error("Error deleting chats for user ID:", userId, e.message);
+    throw e; // Rethrow the error after logging it to handle it further up the call stack if necessary
+  }
+}
+
 
 
 
@@ -129,4 +146,4 @@ async function insertChat(uuid, userMessage, assistantMessage, audio) {
 }
 
 
-export { insertChat, insertMessage, getChatMessages, insertAudio, getAssistantAudioChats };
+export { insertChat, insertMessage, getChatMessages, insertAudio, getAssistantAudioChats, deleteOperation };
