@@ -2,7 +2,7 @@
 import express from 'express';
 import dotenv from 'dotenv';
 import { captureAndAnalyze } from './emotionDetection.js';
-import {Open} from './Open.js';
+import { Open } from './Open.js';
 import fs from 'fs';
 
 
@@ -12,8 +12,9 @@ const open = new Open();
 
 const app = express();
 
-// fix CORS error
-app.use(express.json());
+// change POST request max size
+app.use(express.json({ limit: '512mb' }));
+
 app.use(express.urlencoded({ extended: true }));
 app.use((req, res, next) => {
 	res.header('Access-Control-Allow-Origin', '*');
@@ -27,45 +28,45 @@ app.get('/', async (req, res) => {
 	// save the audio to a file
 	// transcribe the audio
 
-	// const {image, audio} = req.body;
-	// convert audio to a file
-	// fs.writeFileSync('audio.wav', audio, 'base64');
-	const audio = fs.createReadStream('audio.mp3');
+	const {image, audio} = req.body;
+	fs.writeFileSync('audio.wav', audio, 'base64');
+	const audioStream = fs.createReadStream('audio.wav');
 
-	const transcription = await open.transcribeAudio(audio); // expects a stream
+	const transcription = await open.transcribeAudio(audioStream); // expects a stream
 	res.json({ transcription });
 })
 
-// will recieve an image from the client
-app.post('/advice', async (req, res) => {
-	const { image, audio } = req.body; // base64 image, audio is a base64 string
-
-
-	const emotion = await captureAndAnalyze(image);
-	res.json({ emotion });
-})
-
 app.listen(PORT, () => {
-	  console.log(`Server is running on port ${PORT}`);
+	console.log(`Server is running on port ${PORT}`);
 
-	  // print full address sever
-	  console.log(`http://localhost:${PORT}`);
+	// print full address sever
+	console.log(`http://localhost:${PORT}`);
 })
 
 
-// New endpoint to pass user content to chat method
+
+
 app.post('/chat', async (req, res) => {
-	const { content } = req.body; // Get content from request body
+	const { image, audio } = req.body; // Get content from request body
 	try {
-	  const response = await open.chat(content);
-	  res.json({ response });
+
+		// fs.writeFileSync('audio.wav', audio, 'base64');
+		const audioStream = fs.createReadStream('audio.mp3');
+		const transcription = await open.transcribeAudio(audioStream);
+
+		const emotion = await captureAndAnalyze(image);
+
+		const content = `${transcription} \n ${emotion}`;
+
+		const response = await open.chat(content);
+		res.json({ response });
 	} catch (error) {
-	  res.status(500).json({ error: error.message });
+		res.status(500).json({ error: error.message });
 	}
 });
-  //
+//
 
 setInterval(() => {
-	  captureAndAnalyze();
+	captureAndAnalyze();
 }, 5000);
 // testing
