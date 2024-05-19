@@ -46,17 +46,17 @@ app.listen(PORT, () => {
 })
 
 app.post('/chat', async (req, res) => {
-	// const uuid = getUUIDFromCookie(req);
-	console.log(req.body);
-	console.log(req);
+	const uuid = getUUIDFromCookie(req);
 	const { image, audio } = req.body; // Get content from request body
 	try {
 
-		console.log(audio);
 		const base64Audio = audio.replace(/^data:audio\/webm;base64,/, "");
 		const audioBuffer = Buffer.from(base64Audio, 'base64');
-
-		const transcription = await transcribeAudio(audioBuffer);
+		const audioPath = 'audio.webm';
+    	fs.writeFileSync(audioPath, audioBuffer);
+		const audioStream = fs.createReadStream(audioPath);
+		const transcription = await open.transcribeAudio(audioStream);
+		console.log(transcription);
 
 		const emotion = await captureAndAnalyze(image);
 
