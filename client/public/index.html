@@ -10,34 +10,119 @@
       content="Web site created using create-react-app"
     />
     <link rel="apple-touch-icon" href="%PUBLIC_URL%/logo192.png" />
-    <!--
-      manifest.json provides metadata used when your web app is installed on a
-      user's mobile device or desktop. See https://developers.google.com/web/fundamentals/web-app-manifest/
-    -->
-    <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
-    <!--
-      Notice the use of %PUBLIC_URL% in the tags above.
-      It will be replaced with the URL of the `public` folder during the build.
-      Only files inside the `public` folder can be referenced from the HTML.
 
-      Unlike "/favicon.ico" or "favicon.ico", "%PUBLIC_URL%/favicon.ico" will
-      work correctly both with client-side routing and a non-root public URL.
-      Learn how to configure a non-root public URL by running `npm run build`.
-    -->
-    <title>React App</title>
+    <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
+    </style>
+    <script src="https://kit.fontawesome.com/4b3e1776ef.js" crossorigin="anonymous"></script>
+   
+    <title>[INSERT APP NAME HERE]</title>
   </head>
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>
     <div id="root"></div>
-    <!--
-      This HTML file is a template.
-      If you open it directly in the browser, you will see an empty page.
+   
+    
+  <script>
+    const recordButton = document.getElementById('record');
+    const stopButton = document.getElementById('stop');
+    const playButton = document.getElementById('play');
+    const audioElement = document.getElementById('audio');
+    const audioChunks = [];
+    let mediaRecorder;
+    let audioUrl;
 
-      You can add webfonts, meta tags, or analytics to this file.
-      The build step will place the bundled scripts into the <body> tag.
+    // Function to start recording audio
+    recordButton.addEventListener('click', async () => {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const options = { mimeType: 'audio/webm' };
+      mediaRecorder = new MediaRecorder(stream, options);
+      audioChunks.length = 0;
 
-      To begin the development, run `npm start` or `yarn start`.
-      To create a production bundle, use `npm run build` or `yarn build`.
-    -->
+      mediaRecorder.addEventListener('dataavailable', event => {
+        audioChunks.push(event.data);
+      });
+
+      mediaRecorder.start();
+    });
+
+    // Function to stop recording and capture image
+    stopButton.addEventListener('click', async () => {
+      if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+        mediaRecorder.stop();
+        mediaRecorder.addEventListener('stop', async () => {
+          const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+          audioUrl = URL.createObjectURL(audioBlob);
+          playButton.disabled = false; // Enable the play button
+
+          const image = captureImage();
+          await sendData(audioBlob, image);
+        });
+      }
+    });
+
+    // Function to play the recorded audio
+    playButton.addEventListener('click', () => {
+      const audio = new Audio(audioUrl);
+      audio.play();
+    });
+
+    // Function to setup webcam
+    async function setupWebcam() {
+      const video = document.getElementById('video');
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      video.srcObject = stream;
+    }
+
+    // Function to capture an image from the webcam
+    function captureImage() {
+      const video = document.getElementById('video');
+      const canvas = document.createElement('canvas');
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      const context = canvas.getContext('2d');
+      context.drawImage(video, 0, 0, canvas.width, canvas.height);
+      return canvas.toDataURL('image/jpeg');
+    }
+
+    // Function to send audio and image to the server
+    async function sendData(audioBlob, image) {
+      const data = {
+        audio: await blobToBase64(audioBlob),
+        image
+      };
+      const options = {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)
+      };
+
+      const response = await fetch('http://localhost:5000/chat', options);
+      const json = await response.json();
+      console.log(json);
+
+      const speech = new SpeechSynthesisUtterance()
+      const emotion = json.response
+      speech.text = emotion;
+
+      speechSynthesis.speak(speech)
+    }
+
+    // Utility function to convert Blob to Base64
+    function blobToBase64(blob) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+      });
+    }
+
+    setupWebcam();
+  </script>
+
   </body>
 </html>
