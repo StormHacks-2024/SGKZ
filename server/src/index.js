@@ -29,10 +29,8 @@ app.use(express.json({ limit: '512mb' }));
 
 app.use(express.urlencoded({ extended: true }));
 app.use(cors({
-	origin: 'http://localhost:3000', // set the allowed origin to your client's address
+	origin: 'http://localhost:3000', // exactly match the client's origin
 	credentials: true, // allow credentials
-	methods: ['GET', 'POST', 'PUT', 'DELETE'], // allowed methods
-	allowedHeaders: ['Content-Type'] // allowed headers
   }));
 
 app.get('/', async (req, res) => {
@@ -64,7 +62,7 @@ app.post('/chat', async (req, res) => {
 		const content = `${transcription} \n ${emotion}`;
 		const response = await open.chat(content);
 		res.cookie('uuid', uuid);
-		res.json({ response, uuid });
+		res.json({ response, uuid, transcription });
 	} catch (error) {
 		res.status(500).json({ error: error.message });
 	}
